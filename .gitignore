@@ -1,0 +1,82 @@
+# Archivos auxiliares principales de LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex
+*.synctex.gz
+*.pdfsync
+
+# Bibliografía: BibTeX y Biber
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+*-blx.aux
+*-blx.bib
+
+# Índices, glosarios y nomenclaturas
+*.idx
+*.ilg
+*.ind
+*.ist
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.glsdefs
+*.loa
+*.loe
+*.lol
+*.nlg
+*.nlo
+*.nls
+
+# Archivos intermedios de compilación
+*.dvi
+*.xdv
+*.ps
+*-converted-to.*
+
+# Paquetes y herramientas habituales
+*.auxlock
+*.dpth
+*.md5
+*.nav
+*.snm
+*.vrb
+*.pyg
+*.pytxcode
+*.tdo
+*.thm
+_minted*/
+pythontex-files-*/
+svg-inkscape/
+latex.out/
+
+# Archivos temporales y copias de editores
+*.bak
+*.sav
+*.swp
+*.swo
+*~
+*.tmp
+*.temp
+
+# Visual Studio Code y LaTeX Workshop
+.latex-workshop/
+
+# PDF generado por el documento principal
+TI_Paniagua_Daniel.pdf
+
+# Planificación GDP guardada como txt
+planificacion.txt
+
+# Estilo de redacción
+Estilo redaccion.txt
