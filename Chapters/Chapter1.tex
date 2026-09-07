@@ -75,85 +75,76 @@ Esta memoria describe el desarrollo y la evaluación de la solución implementad
 
 El pronóstico de la demanda eléctrica ha sido abordado mediante modelos estadísticos, técnicas de aprendizaje automático y arquitecturas de aprendizaje profundo. La elección del método depende del horizonte de predicción, la resolución temporal, el nivel de agregación geográfica y la disponibilidad de variables explicativas. En sistemas con una participación residencial significativa, la temperatura y otras condiciones meteorológicas tienen una incidencia relevante sobre el consumo, principalmente por el uso de equipos de climatización. En un país de gran extensión territorial, este efecto varía entre regiones y estaciones del año, por lo que un pronóstico agregado puede ocultar comportamientos locales.
 
-En la Argentina se encontraron antecedentes recientes que confirman la importancia de incorporar información meteorológica. Oviedo desarrolló un modelo LSTM para pronosticar la demanda horaria de la provincia de Córdoba a partir de datos de consumo y variables climáticas, temporales y demográficas \cite{oviedo2025regional}. El modelo alcanzó un error porcentual absoluto medio (MAPE) de 3,20\% y un coeficiente de determinación de 0,95. Por su parte, Uhrig et al. estudiaron la demanda diaria de Entre Ríos mediante una LSTM multivariada con variables meteorológicas, temporales y energéticas \cite{uhrig2026multivariate}. Los autores observaron mayores niveles de demanda ante temperaturas extremas y obtuvieron mejores resultados que con un método estadístico y una red GRU. Ambos trabajos muestran la utilidad de las variables meteorológicas, aunque se limitan a una provincia y no consideran conjuntamente la demanda nacional y su desagregación regional.
+En la Argentina, Oviedo desarrolló un modelo LSTM para pronosticar la demanda horaria de la provincia de Córdoba a partir de datos de consumo y variables climáticas, temporales y demográficas \cite{oviedo2025regional}. El modelo alcanzó un error porcentual absoluto medio (MAPE) de 3,20\% y un coeficiente de determinación de 0,95. Por su parte, Uhrig et al. estudiaron la demanda diaria de Entre Ríos mediante una LSTM multivariada con variables meteorológicas, temporales y energéticas \cite{uhrig2026multivariate}. Los autores observaron mayores niveles de demanda ante temperaturas extremas y obtuvieron mejores resultados que con un método estadístico y una red GRU. Ambos antecedentes confirman la relevancia de las variables exógenas, aunque se limitan a una provincia y no consideran conjuntamente la demanda nacional y su desagregación regional.
 
-Como antecedente latinoamericano de alcance nacional, Leme et al. aplicaron bosques aleatorios, máquinas de vectores de soporte y potenciación por gradiente al pronóstico de la demanda del sistema interconectado brasileño \cite{leme2020brazil}. Los autores integraron datos de distintos organismos y evaluaron resoluciones diaria y mensual. Aquila et al. revisaron los métodos utilizados para la planificación operativa de corto plazo en Brasil y destacaron la selección de variables, la segmentación según patrones similares y los enfoques jerárquicos de pronóstico \cite{aquila2023overview}. Por su extensión territorial y diversidad climática, el caso brasileño presenta mayor proximidad con el problema argentino que los estudios limitados a empresas distribuidoras o grupos reducidos de usuarios.
+Como antecedente latinoamericano de alcance nacional, Leme et al. aplicaron bosques aleatorios, máquinas de vectores de soporte y potenciación por gradiente al pronóstico de la demanda del sistema interconectado brasileño \cite{leme2020brazil}. Aquila et al. revisaron los métodos utilizados para la planificación operativa de corto plazo en Brasil y destacaron la selección de variables, la segmentación según patrones similares y los enfoques jerárquicos de pronóstico \cite{aquila2023overview}. Debido a su extensión territorial y diversidad climática, el caso brasileño presenta mayor proximidad con el problema argentino que los estudios limitados a una empresa distribuidora o a grupos reducidos de usuarios.
 
-Los métodos basados en árboles de decisión representan una referencia habitual para este tipo de problemas. Entre ellos, XGBoost permite modelar relaciones no lineales e incorporar variables meteorológicas y calendarias con un costo computacional moderado, aunque requiere construir explícitamente atributos que describan la historia y la estacionalidad de la serie. En el trabajo se utilizó como línea de base para comparar, bajo un mismo procedimiento de validación, enfoques más recientes de pronóstico de series temporales.
+La experiencia operativa de CAMMESA constituye otro antecedente directo del trabajo. Antes de su realización, el área de Programación Semanal y Diaria utilizaba modelos SARIMAX, XGBoost y LSTM para estimar la demanda agregada del SADI. Las evaluaciones internas mostraban valores de MAPE aproximadamente comprendidos entre 3\% para el día siguiente y 10\% para los horizontes más alejados, con diferencias según el modelo y las condiciones analizadas. Estos resultados no proceden de una publicación académica y, por lo tanto, no son directamente comparables con los trabajos citados. No obstante, documentan el desempeño de los métodos en el entorno de aplicación y muestran tanto el aumento del error con el horizonte como la necesidad de incorporar variables meteorológicas y calendarias identificadas por los especialistas.
 
-La investigación actual avanzó hacia redes neuronales capaces de generar directamente horizontes de múltiples pasos y representar patrones en diferentes escalas. En esta línea se encuentran arquitecturas basadas en bloques residuales e interpolación jerárquica, como N-BEATS y N-HiTS \cite{oreshkin2020nbeats,challu2023nhits}, y modelos basados en \textit{Transformers} que procesan segmentos temporales, como PatchTST \cite{nie2023patchtst}. Estas propuestas buscan aprovechar ventanas históricas extensas y reducir las limitaciones de las predicciones recursivas, características relevantes para un horizonte diario de hasta catorce días.
+Los métodos basados en árboles, como XGBoost, representan una referencia adecuada para este problema porque permiten modelar relaciones no lineales e incorporar variables exógenas con un costo computacional moderado. Sin embargo, requieren construir explícitamente atributos que describan la historia y la estacionalidad de la serie. En el trabajo, XGBoost se utilizó como línea de base para determinar si enfoques más recientes mejoraban el pronóstico bajo un mismo procedimiento de validación.
 
-Otra tendencia reciente corresponde a los modelos fundacionales de series temporales. Estos modelos se preentrenan sobre grandes colecciones de datos reales y sintéticos, y pueden aplicarse a nuevas series sin entrenamiento específico o con un ajuste limitado. Chronos y TimesFM son ejemplos de este enfoque y mostraron resultados competitivos en conjuntos de datos de distintos dominios \cite{ansari2024chronos,das2024timesfm}. Su aplicación a la demanda eléctrica argentina requiere, sin embargo, una evaluación específica, ya que el desempeño informado sobre conjuntos generales no garantiza la representación adecuada de la sensibilidad meteorológica, las particularidades calendarias ni las diferencias regionales del SADI.
+La investigación reciente avanzó hacia arquitecturas neuronales diseñadas para generar horizontes de múltiples pasos y representar patrones en distintas escalas. Oreshkin et al. aplicaron N-BEATS al pronóstico de demanda eléctrica de mediano plazo sobre 35 series nacionales europeas y obtuvieron mejoras frente a métodos estadísticos, de aprendizaje automático e híbridos \cite{oreshkin2021nbeatsload}. El resultado aporta evidencia específica sobre la utilidad de las arquitecturas residuales para modelar tendencias, estacionalidades y fluctuaciones de la demanda, aunque trabaja con series mensuales y un horizonte diferente del considerado en este trabajo. Otras arquitecturas, entre ellas N-HiTS y modelos basados en Transformers como PatchTST, extienden esta línea mediante mecanismos de procesamiento multiescala y segmentación temporal \cite{challu2023nhits,nie2023patchtst}. Su interés para el problema radica en la capacidad de producir pronósticos directos de varios pasos y aprovechar ventanas históricas extensas, pero su desempeño debe comprobarse con datos meteorológicos y regionales del sistema analizado.
 
-La tabla \ref{tab:estado_arte} resume los antecedentes de mayor relación con el problema. Las métricas no son directamente comparables debido a las diferencias entre conjuntos de datos, horizontes, resoluciones y niveles de agregación. Por este motivo, se enfatizan el alcance y el aporte de cada trabajo.
+Los modelos fundacionales constituyen una tendencia aún más reciente. Se preentrenan sobre grandes colecciones de series y pueden aplicarse a datos nuevos sin entrenamiento específico o con un ajuste limitado. Meyer et al. compararon modelos fundacionales, entre ellos Chronos y TimesFM, con Transformers entrenados desde cero para pronosticar demanda eléctrica residencial de corto plazo \cite{meyer2025foundationload}. Los resultados indicaron desempeños comparables y, en algunos casos, superiores, con menor necesidad de entrenamiento específico. Este antecedente respalda su evaluación en el dominio eléctrico, aunque su escala residencial difiere de la demanda de un sistema nacional y no resuelve por sí mismo la incorporación de variables exógenas ni la desagregación regional.
+
+La tabla \ref{tab:estado_arte} resume los antecedentes de mayor relación con el trabajo. Las métricas no son directamente comparables debido a las diferencias entre conjuntos de datos, horizontes, resoluciones y niveles de agregación.
 
 \begin{table}[htbp]
 	\centering
 	\caption{Antecedentes relacionados con el pronóstico de demanda eléctrica.}
 	\label{tab:estado_arte}
-	
 	\footnotesize
 	\setlength{\tabcolsep}{3pt}
-	\renewcommand{\arraystretch}{1.15}
+	\renewcommand{\arraystretch}{1.10}
 	
 	\begin{tabularx}{\textwidth}{@{}XXXX@{}}
 		\toprule
-		
 		\textbf{Referencia} &
 		\textbf{Enfoque} &
 		\textbf{Datos y alcance} &
 		\textbf{Resultado o aporte} \\
-		
 		\midrule
 		
 		Oviedo \cite{oviedo2025regional} &
 		LSTM &
-		Demanda horaria de Córdoba con variables climáticas, temporales y demográficas &
-		MAPE de 3,20\,\% y $R^2$ de 0,95 \\
-		
-		\addlinespace
+		Demanda horaria de Córdoba y variables exógenas &
+		MAPE de 3,20\% y $R^2$ de 0,95 \\
 		
 		Uhrig et al. \cite{uhrig2026multivariate} &
 		LSTM multivariada &
-		Demanda diaria de Entre Ríos con variables meteorológicas, temporales y energéticas &
-		Mejora respecto de un modelo estadístico y una red GRU \\
+		Demanda diaria de Entre Ríos y 21 variables &
+		Mejora frente a un método estadístico y una GRU \\
 		
-		\addlinespace
+		CAMMESA, evaluación interna &
+		SARIMAX, XGBoost y LSTM &
+		Demanda agregada del SADI, hasta catorce días &
+		MAPE aproximado entre 3\% y 10\% según horizonte y modelo \\
 		
 		Leme et al. \cite{leme2020brazil} &
 		RF, SVM y potenciación por gradiente &
-		Sistema interconectado brasileño con resolución diaria y mensual &
-		Comparación de métodos sobre datos de alcance nacional \\
+		Sistema interconectado brasileño &
+		Comparación sobre datos de alcance nacional \\
 		
-		\addlinespace
+		Oreshkin et al. \cite{oreshkin2021nbeatsload} &
+		N-BEATS &
+		Demanda mensual de 35 países europeos &
+		Mejora de precisión y sesgo frente a diez métodos \\
 		
-		Oreshkin et al., Challu et al. y Nie et al.
-		\cite{oreshkin2020nbeats,challu2023nhits,nie2023patchtst} &
-		Redes neuronales modernas &
-		Series temporales de distintos dominios y horizontes &
-		Pronóstico de múltiples pasos y representación de diferentes escalas \\
-		
-		\addlinespace
-		
-		Ansari et al. y Das et al.
-		\cite{ansari2024chronos,das2024timesfm} &
-		Modelos fundacionales &
-		Colecciones de series temporales reales y sintéticas &
-		Aplicación a nuevas series sin entrenamiento específico \\
-		
+		Meyer et al. \cite{meyer2025foundationload} &
+		Modelos fundacionales y Transformers &
+		Demanda residencial de corto plazo &
+		Desempeño competitivo con menor entrenamiento específico \\
 		\bottomrule
 	\end{tabularx}
 \end{table}
 
-La revisión mostró una disponibilidad limitada de estudios que reprodujeran las condiciones del problema considerado. Los antecedentes argentinos encontrados se concentran en una provincia y emplean principalmente redes recurrentes. Los trabajos de alcance nacional de otros países presentan diferencias en la resolución, el horizonte o la organización territorial. No se encontraron comparaciones que combinaran un horizonte diario de catorce días, variables meteorológicas, demanda total de un sistema eléctrico nacional y desagregación en nueve regiones extensas.
-
-Esta vacancia fundamentó el enfoque adoptado en el trabajo. Se compararon métodos de referencia con arquitecturas neuronales modernas y modelos preentrenados mediante un conjunto de datos y un procedimiento de validación comunes. El análisis consideró la demanda total del SADI y su desagregación regional, junto con variables meteorológicas representativas de la diversidad geográfica del país. De este modo, se evaluó si los avances recientes en pronóstico de series temporales resultaban aplicables a las condiciones particulares de la programación eléctrica argentina.
+La revisión mostró una disponibilidad limitada de estudios que reprodujeran las condiciones del problema considerado. Los antecedentes argentinos publicados se concentran en una provincia, mientras que los trabajos sobre arquitecturas modernas utilizan otras escalas, horizontes o niveles de agregación. Tampoco se encontraron comparaciones que combinaran un horizonte diario de catorce días, variables meteorológicas, demanda total de un sistema eléctrico nacional y desagregación en regiones extensas.
 
 
 \section{Objetivos y alcance}
 \label{sec:objetivos}
 
-El objetivo general del trabajo fue desarrollar e implementar una solución automatizada para pronosticar la demanda eléctrica diaria del Sistema Argentino de Interconexión (SADI), con un horizonte de hasta catorce días. Las variables objetivo fueron la energía diaria y las potencias mínima y máxima, tanto para la totalidad del sistema como para cada una de las nueve regiones eléctricas consideradas.
+El objetivo general del trabajo fue desarrollar e implementar una solución automatizada para pronosticar la demanda eléctrica diaria del Sistema Argentino de Interconexión (SADI), con un horizonte de hasta catorce días. Las variables objetivo fueron la energía diaria y las potencias mínima y máxima, tanto para la totalidad del sistema como para cada una de las regiones eléctricas consideradas.
 
 Para alcanzar este propósito, se definieron los siguientes objetivos específicos:
 
