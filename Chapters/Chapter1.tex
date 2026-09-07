@@ -24,8 +24,8 @@ En este capítulo se describen las principales características de la demanda el
 %----------------------------------------------------------------------------------------
 
 
-\section{La demanda eléctrica en la operación del sistema argentino}
-\label{sec:}
+\section{Introducción}
+\label{sec:introduccion}
 
 La energía eléctrica constituye un insumo esencial para el funcionamiento de los hogares, la industria, el comercio, los servicios y la infraestructura de un país. Su disponibilidad debe garantizarse de manera continua, con niveles adecuados de calidad y seguridad. Dado que no puede almacenarse en grandes cantidades, la generación debe ajustarse permanentemente al consumo, junto con las pérdidas y los intercambios que se producen en la red.
 
@@ -38,6 +38,12 @@ La planificación de la operación permite anticipar estas condiciones y definir
 En ambas instancias, una subestimación de la demanda puede conducir a una programación insuficiente de recursos y reducir los márgenes disponibles para responder ante contingencias. Por el contrario, una sobreestimación puede provocar la programación innecesaria de unidades de generación e incrementar los costos operativos. En consecuencia, la calidad del pronóstico influye en la confiabilidad, la seguridad y la eficiencia económica de la operación.
 
 El pronóstico de la demanda consiste en estimar su evolución futura a partir de información histórica y de variables relacionadas con su comportamiento. Los pronósticos de corto plazo se utilizan principalmente en la programación y operación del sistema, mientras que los horizontes más extensos permiten evaluar inversiones, ampliaciones de infraestructura y escenarios de crecimiento. La naturaleza temporal de la demanda, su sensibilidad a factores meteorológicos y calendarios, y la necesidad de anticipar su evolución justifican el desarrollo de métodos capaces de representar relaciones complejas y adaptarse a diferentes condiciones operativas.
+
+%----------------------------------------------------------------------------------------
+
+%\section{Contexto y motivación}
+
+%----------------------------------------------------------------------------------------
 
 
 \section{Contexto y motivación}
@@ -56,3 +62,117 @@ Otra limitación correspondía al nivel de agregación geográfica. Los modelos 
 En este contexto, el trabajo se orientó a obtener una herramienta de pronóstico confiable y adecuada para su utilización operativa. Se automatizaron la obtención y el procesamiento de los datos, la ejecución de las predicciones y el almacenamiento de los resultados. También se incorporaron mecanismos de validación y monitoreo basados en métricas objetivas, se compararon diferentes modelos y se analizó la generación de pronósticos por región eléctrica.
 
 Esta memoria describe el desarrollo y la evaluación de la solución implementada, que permite reducir la intervención manual, mejorar la trazabilidad y disponer de información objetiva sobre la calidad de las predicciones. De este modo, los especialistas pueden concentrarse en el análisis de situaciones particulares y utilizar los resultados como apoyo para la programación semanal y diaria del sistema eléctrico.
+
+
+%----------------------------------------------------------------------------------------
+
+%\section{Estado del arte}
+
+%----------------------------------------------------------------------------------------
+
+\section{Estado del arte}
+\label{sec:estado_arte}
+
+El pronóstico de la demanda eléctrica ha sido abordado mediante modelos estadísticos, técnicas de aprendizaje automático y arquitecturas de aprendizaje profundo. La elección del método depende del horizonte de predicción, la resolución temporal, el nivel de agregación geográfica y la disponibilidad de variables explicativas. En sistemas con una participación residencial significativa, la temperatura y otras condiciones meteorológicas tienen una incidencia relevante sobre el consumo, principalmente por el uso de equipos de climatización. En un país de gran extensión territorial, este efecto varía entre regiones y estaciones del año, por lo que un pronóstico agregado puede ocultar comportamientos locales.
+
+En la Argentina se encontraron antecedentes recientes que confirman la importancia de incorporar información meteorológica. Oviedo desarrolló un modelo LSTM para pronosticar la demanda horaria de la provincia de Córdoba a partir de datos de consumo y variables climáticas, temporales y demográficas \cite{oviedo2025regional}. El modelo alcanzó un error porcentual absoluto medio (MAPE) de 3,20\% y un coeficiente de determinación de 0,95. Por su parte, Uhrig et al. estudiaron la demanda diaria de Entre Ríos mediante una LSTM multivariada con variables meteorológicas, temporales y energéticas \cite{uhrig2026multivariate}. Los autores observaron mayores niveles de demanda ante temperaturas extremas y obtuvieron mejores resultados que con un método estadístico y una red GRU. Ambos trabajos muestran la utilidad de las variables meteorológicas, aunque se limitan a una provincia y no consideran conjuntamente la demanda nacional y su desagregación regional.
+
+Como antecedente latinoamericano de alcance nacional, Leme et al. aplicaron bosques aleatorios, máquinas de vectores de soporte y potenciación por gradiente al pronóstico de la demanda del sistema interconectado brasileño \cite{leme2020brazil}. Los autores integraron datos de distintos organismos y evaluaron resoluciones diaria y mensual. Aquila et al. revisaron los métodos utilizados para la planificación operativa de corto plazo en Brasil y destacaron la selección de variables, la segmentación según patrones similares y los enfoques jerárquicos de pronóstico \cite{aquila2023overview}. Por su extensión territorial y diversidad climática, el caso brasileño presenta mayor proximidad con el problema argentino que los estudios limitados a empresas distribuidoras o grupos reducidos de usuarios.
+
+Los métodos basados en árboles de decisión representan una referencia habitual para este tipo de problemas. Entre ellos, XGBoost permite modelar relaciones no lineales e incorporar variables meteorológicas y calendarias con un costo computacional moderado, aunque requiere construir explícitamente atributos que describan la historia y la estacionalidad de la serie. En el trabajo se utilizó como línea de base para comparar, bajo un mismo procedimiento de validación, enfoques más recientes de pronóstico de series temporales.
+
+La investigación actual avanzó hacia redes neuronales capaces de generar directamente horizontes de múltiples pasos y representar patrones en diferentes escalas. En esta línea se encuentran arquitecturas basadas en bloques residuales e interpolación jerárquica, como N-BEATS y N-HiTS \cite{oreshkin2020nbeats,challu2023nhits}, y modelos basados en \textit{Transformers} que procesan segmentos temporales, como PatchTST \cite{nie2023patchtst}. Estas propuestas buscan aprovechar ventanas históricas extensas y reducir las limitaciones de las predicciones recursivas, características relevantes para un horizonte diario de hasta catorce días.
+
+Otra tendencia reciente corresponde a los modelos fundacionales de series temporales. Estos modelos se preentrenan sobre grandes colecciones de datos reales y sintéticos, y pueden aplicarse a nuevas series sin entrenamiento específico o con un ajuste limitado. Chronos y TimesFM son ejemplos de este enfoque y mostraron resultados competitivos en conjuntos de datos de distintos dominios \cite{ansari2024chronos,das2024timesfm}. Su aplicación a la demanda eléctrica argentina requiere, sin embargo, una evaluación específica, ya que el desempeño informado sobre conjuntos generales no garantiza la representación adecuada de la sensibilidad meteorológica, las particularidades calendarias ni las diferencias regionales del SADI.
+
+La tabla \ref{tab:estado_arte} resume los antecedentes de mayor relación con el problema. Las métricas no son directamente comparables debido a las diferencias entre conjuntos de datos, horizontes, resoluciones y niveles de agregación. Por este motivo, se enfatizan el alcance y el aporte de cada trabajo.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Antecedentes relacionados con el pronóstico de demanda eléctrica.}
+	\label{tab:estado_arte}
+	
+	\footnotesize
+	\setlength{\tabcolsep}{3pt}
+	\renewcommand{\arraystretch}{1.15}
+	
+	\begin{tabularx}{\textwidth}{@{}XXXX@{}}
+		\toprule
+		
+		\textbf{Referencia} &
+		\textbf{Enfoque} &
+		\textbf{Datos y alcance} &
+		\textbf{Resultado o aporte} \\
+		
+		\midrule
+		
+		Oviedo \cite{oviedo2025regional} &
+		LSTM &
+		Demanda horaria de Córdoba con variables climáticas, temporales y demográficas &
+		MAPE de 3,20\,\% y $R^2$ de 0,95 \\
+		
+		\addlinespace
+		
+		Uhrig et al. \cite{uhrig2026multivariate} &
+		LSTM multivariada &
+		Demanda diaria de Entre Ríos con variables meteorológicas, temporales y energéticas &
+		Mejora respecto de un modelo estadístico y una red GRU \\
+		
+		\addlinespace
+		
+		Leme et al. \cite{leme2020brazil} &
+		RF, SVM y potenciación por gradiente &
+		Sistema interconectado brasileño con resolución diaria y mensual &
+		Comparación de métodos sobre datos de alcance nacional \\
+		
+		\addlinespace
+		
+		Oreshkin et al., Challu et al. y Nie et al.
+		\cite{oreshkin2020nbeats,challu2023nhits,nie2023patchtst} &
+		Redes neuronales modernas &
+		Series temporales de distintos dominios y horizontes &
+		Pronóstico de múltiples pasos y representación de diferentes escalas \\
+		
+		\addlinespace
+		
+		Ansari et al. y Das et al.
+		\cite{ansari2024chronos,das2024timesfm} &
+		Modelos fundacionales &
+		Colecciones de series temporales reales y sintéticas &
+		Aplicación a nuevas series sin entrenamiento específico \\
+		
+		\bottomrule
+	\end{tabularx}
+\end{table}
+
+La revisión mostró una disponibilidad limitada de estudios que reprodujeran las condiciones del problema considerado. Los antecedentes argentinos encontrados se concentran en una provincia y emplean principalmente redes recurrentes. Los trabajos de alcance nacional de otros países presentan diferencias en la resolución, el horizonte o la organización territorial. No se encontraron comparaciones que combinaran un horizonte diario de catorce días, variables meteorológicas, demanda total de un sistema eléctrico nacional y desagregación en nueve regiones extensas.
+
+Esta vacancia fundamentó el enfoque adoptado en el trabajo. Se compararon métodos de referencia con arquitecturas neuronales modernas y modelos preentrenados mediante un conjunto de datos y un procedimiento de validación comunes. El análisis consideró la demanda total del SADI y su desagregación regional, junto con variables meteorológicas representativas de la diversidad geográfica del país. De este modo, se evaluó si los avances recientes en pronóstico de series temporales resultaban aplicables a las condiciones particulares de la programación eléctrica argentina.
+
+
+\section{Objetivos y alcance}
+\label{sec:objetivos}
+
+El objetivo general del trabajo fue desarrollar e implementar una solución automatizada para pronosticar la demanda eléctrica diaria del Sistema Argentino de Interconexión (SADI), con un horizonte de hasta catorce días. Las variables objetivo fueron la energía diaria y las potencias mínima y máxima, tanto para la totalidad del sistema como para cada una de las nueve regiones eléctricas consideradas.
+
+Para alcanzar este propósito, se definieron los siguientes objetivos específicos:
+
+\begin{itemize}
+	
+	\item Integrar y procesar los datos históricos de demanda, las variables meteorológicas y la información calendaria necesarias para generar los pronósticos del SADI y de sus regiones eléctricas.
+	
+	\item Implementar y comparar modelos de aprendizaje automático, arquitecturas neuronales modernas y modelos preentrenados para series temporales, utilizando un modelo XGBoost como referencia.
+	
+	\item Evaluar la capacidad de los modelos para pronosticar la energía diaria y las potencias mínima y máxima en cada uno de los catorce días del horizonte.
+	
+	\item Comparar el desempeño de los modelos mediante el error absoluto medio (MAE), la raíz del error cuadrático medio (RMSE) y el error porcentual absoluto medio (MAPE), calculados sobre períodos no utilizados durante el entrenamiento.
+	
+	\item Analizar los errores según la variable pronosticada, el horizonte de predicción, la región eléctrica y las condiciones meteorológicas y calendarias.
+	
+	\item Automatizar la obtención y el procesamiento de los datos, la ejecución periódica de los modelos y el almacenamiento centralizado de sus entradas, predicciones y métricas.
+	
+	\item Implementar mecanismos de monitoreo que permitan consultar el desempeño histórico de los modelos, comparar sus resultados y detectar variaciones en la calidad de las predicciones.
+	
+\end{itemize}
+
+El cumplimiento de estos objetivos permitió determinar qué enfoques resultaron más adecuados para las distintas variables, regiones y horizontes, y disponer de una herramienta trazable para apoyar las tareas de programación semanal y diaria de CAMMESA.
