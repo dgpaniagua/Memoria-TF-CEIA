@@ -2,183 +2,133 @@
 
 \label{Chapter2}
 
+En este capítulo se presentan las tecnologías, bibliotecas, fuentes de datos e infraestructura de cómputo utilizadas como soporte del trabajo. El propósito es describir los componentes de terceros y el entorno tecnológico utilizados.
+
+La solución se apoyó principalmente en Microsoft Fabric, plataforma adoptada por CAMMESA para el almacenamiento, procesamiento y análisis de datos. Aquellas actividades que requerían acceso directo a sistemas internos o ejecución desde la red local se alojaron en una instalación de Dagster ejecutada en infraestructura propia de la empresa.
+
 %----------------------------------------------------------------------------------------
-%	SECTION 1
+\section{Frameworks para procesamiento y modelado}
+\label{sec:frameworks_bibliotecas}
 %----------------------------------------------------------------------------------------
-Todos los capítulos deben comenzar con un breve párrafo introductorio que indique cuál es el contenido que se encontrará al leerlo.  La redacción sobre el contenido de la memoria debe hacerse en presente y todo lo referido al proyecto en pasado, siempre de modo impersonal.
 
-\section{Estilo y convenciones}
-\label{sec:ejemplo}
+El lenguaje principal utilizado fue Python, debido a su amplia adopción en ciencia de datos y a la disponibilidad de bibliotecas para aprendizaje automático, series temporales y acceso a fuentes heterogéneas. Su utilización permitió mantener una base tecnológica común entre los notebooks ejecutados en Fabric y los procesos alojados en el servidor local.
 
-\subsection{Uso de mayúscula inicial para los título de secciones}
+Para la preparación y análisis de datos se utilizó principalmente la librería pandas, que proporciona estructuras tabulares y operaciones para selección, agrupamiento y transformación de datos. Esta herramienta resulta apropiada para el tratamiento de series temporales de demanda y meteorología, especialmente en las etapas que pueden resolverse en memoria sobre un único nodo.
 
-Si en el texto se hace alusión a diferentes partes del trabajo referirse a ellas como capítulo, sección o subsección según corresponda. Por ejemplo: ``En el capítulo \ref{Chapter1} se explica tal cosa'', o ``En la sección \ref{sec:ejemplo} se presenta lo que sea'', o ``En la subsección \ref{subsec:ejemplo} se discute otra cosa''.
+Cuando el volumen de datos o la integración con los servicios de Fabric lo requirió, se empleó PySpark. Los notebooks de Fabric admiten procesamiento distribuido mediante Apache Spark y permiten combinar DataFrames de Spark con pandas. Esta alternativa proporciona escalabilidad para el tratamiento de datos históricos con resolución horaria o inferior, sin abandonar el ecosistema Python utilizado en el resto de la solución \cite{microsoftFabricNotebooks}.
 
-Cuando se quiere poner una lista tabulada, se hace así:
+Para los modelos de referencia se previó el uso de regresiones lineales y algoritmos basados en árboles, particularmente XGBoost. Las regresiones lineales ofrecen una línea de base simple e interpretable, útil para verificar que modelos más complejos aporten una mejora real. XGBoost, por su parte, permite representar relaciones no lineales e interacciones entre variables históricas, meteorológicas y calendarias. La interfaz compatible con scikit-learn facilita la preparación de experimentos, el ajuste de hiperparámetros y el cálculo homogéneo de métricas.
 
-\begin{itemize}
-	\item Este es el primer elemento de la lista.
-	\item Este es el segundo elemento de la lista.
-\end{itemize}
+Los modelos neuronales abarcan redes recurrentes, como LSTM y GRU, y arquitecturas más recientes diseñadas para el pronóstico de múltiples pasos. Para su implementación se consideraron bibliotecas especializadas en series temporales que utilizan PyTorch como motor de entrenamiento. Este enfoque permite evaluar familias de modelos con una interfaz común y reducir diferencias de implementación que podrían afectar la comparación.
 
-Notar el uso de las mayúsculas y el punto al final de cada elemento.
+El seguimiento de experimentos y modelos se apoyó en MLflow, integrado en las capacidades de ciencia de datos de Fabric. MLflow permite registrar parámetros, métricas y artefactos asociados con cada ejecución, además de conservar versiones de los modelos. Su elección respondió a la necesidad de comparar alternativas de manera reproducible y mantener trazabilidad entre los datos utilizados, la configuración de entrenamiento y los resultados obtenidos. Fabric incorpora esta herramienta dentro de sus notebooks y experiencias de ciencia de datos \cite{microsoftFabricMLflow}.
 
-Si se desea poner una lista numerada el formato es este:
+En el entorno local se utilizó Dagster como orquestador de datos. Su modelo basado en activos permite representar tablas, archivos y otros productos persistentes como elementos con dependencias explícitas, historial de ejecuciones y políticas de actualización \cite{dagsterOverview,dagsterAssets}. Esta característica resulta adecuada para los procesos que obtienen información desde sistemas internos y posteriormente la escriben en Fabric. pandas y NumPy se utilizaron también en este entorno, junto con bibliotecas de Azure para autenticación y acceso a servicios en la nube.
 
-\begin{enumerate}
-	\item Este es el primer elemento de la lista.
-	\item Este es el segundo elemento de la lista.
-\end{enumerate}
+Para la lectura de series operativas se utilizó PIconnect, conector de Python para PI System y PI Asset Framework. La biblioteca permite consultar valores registrados o interpolados mediante el SDK de PI, por lo que posibilita acceder desde el servidor local a la información histórica del Sistema Operativo en Tiempo Real (SOTR) de CAMMESA \cite{piconnectDocs}. 
 
-Notar el uso de las mayúsculas y el punto al final de cada elemento.
+Finalmente, Power BI se empleó como herramienta de visualización, tanto para los pronósticos como para las métricas de desempeño. Su integración con Fabric permite construir informes sobre los datos centralizados sin incorporar una capa adicional de exportación.
 
-\subsection{Este es el título de una subsección}
-\label{subsec:ejemplo}
+%----------------------------------------------------------------------------------------
+\section{Fuentes de datos para el pronóstico de demanda}
+\label{sec:datasets}
+%----------------------------------------------------------------------------------------
 
-Se recomienda no utilizar \textbf{texto en negritas} en ningún párrafo, ni tampoco texto \underline{subrayado}. En cambio sí se debe utilizar \textit{texto en itálicas} para palabras en un idioma extranjero, al menos la primera vez que aparecen en el texto. En el caso de palabras que estamos inventando se deben utilizar ``comillas'', así como también para citas textuales. Por ejemplo, un \textit{digital filter} es una especie de ``selector'' que permite separar ciertos componentes armónicos en particular.
+Los conjuntos de datos utilizados fueron construidos a partir de fuentes internas de CAMMESA y servicios meteorológicos externos. No se trató, por lo tanto, de un dataset público preparado previamente para aprendizaje automático, sino de información operativa que debió integrarse con distintas resoluciones, coberturas geográficas y condiciones de acceso.
 
-La escritura debe ser impersonal. Por ejemplo, no utilizar ``el diseño del firmware lo hice de acuerdo con tal principio'', sino ``el firmware fue diseñado utilizando tal principio''. 
+La variable principal provino de registros de demanda eléctrica del sistema SOTR, almacenados en PI System. Las series poseen una resolución original de diez minutos y representan la demanda del SADI y de sus regiones eléctricas. A partir de estas series se obtienen las variables diarias que actúan como objetivos de pronóstico: energía y potencias mínima y máxima.
 
-El trabajo es algo que al momento de escribir la memoria se supone que ya está concluido, entonces todo lo que se refiera a hacer el trabajo se narra en tiempo pasado, porque es algo que ya ocurrió. Por ejemplo, "se diseñó el firmware empleando la técnica de test driven development".
+También se incorporó información calendaria, como día de la semana, feriados y otras clasificaciones utilizadas habitualmente por los especialistas. Estas variables permiten representar modificaciones del consumo asociadas con la actividad residencial, comercial e industrial.
 
-En cambio, la memoria es algo que está vivo cada vez que el lector la lee. Por eso transcurre siempre en tiempo presente, como por ejemplo:
+La información meteorológica se obtuvo de tres fuentes. La primera correspondió al Servicio Meteorológico Nacional (SMN), cuyos datos se consideraron prioritarios por su carácter oficial. Se utilizaron archivos de observaciones diarias y datos horarios publicados en formato de texto \cite{datosabiertosSMN}. Debido a restricciones de acceso desde direcciones IP externas al país, la descargas automáticas se realizan desde el servidor local y los archivos se almacenan en un Lakehouse de Fabric para su posterior lectura. Los registros incluyen, entre otras variables, temperatura, humedad relativa, presión y viento. La desventaja que presentan los datos de pronóstico del SMN es que su horizonte máximo es de 7 días, incluyendo el día en curso.
 
-``En el presente capítulo se da una visión global sobre las distintas pruebas realizadas y los resultados obtenidos. Se explica el modo en que fueron llevados a cabo los test unitarios y las pruebas del sistema''.
+La segunda fuente fue Open-Meteo, utilizada para obtener datos históricos y pronósticos meteorológicos mediante interfaces de programación (API). Tiene múltiples variables disponibles, como temperatura, humedad, presión, viento, nubosidad, precipitación, radiación solar y temperatura aparente con resolución horaria o agregación diaria. La posibilidad de consultas por coordenadas facilita asociar las variables con puntos representativos de las regiones eléctricas. Para los pronósticos se seleccionaron algunos de los modelos disponibles, según el horizonte de cálculo y disponibilidad geográfica \cite{openMeteoHistorical,openMeteoForecast}.
 
-Se recomienda no utilizar una sección de glosario sino colocar la descripción de las abreviaturas como parte del mismo cuerpo del texto. Por ejemplo, RTOS (\textit{Real Time Operating System}, Sistema Operativo de Tiempo Real) o en caso de considerarlo apropiado mediante notas a pie de página.
+La tercera fuente de pronósticos corresponde a The Weather Channel \cite{weatherWeb}. Su inclusión permite disponer de una referencia meteorológica adicional, que además es habitualmente consultada por el área de Programación Semanal y Diaria de CAMMESA. Esta fuente presenta un horizonte máximo de pronóstico de 15 días, que se ajusta al requerimiento para predicción de demanda.
 
-Si se desea indicar alguna página web utilizar el siguiente formato de referencias bibliográficas, dónde las referencias se detallan en la sección de bibliografía de la memoria, utilizado el formato establecido por IEEE en \citep{IEEE:citation}. Por ejemplo, ``el presente trabajo se basa en la plataforma EDU-CIAA-NXP \citep{CIAA}, la cual...''.
+La tabla \ref{tab:fuentes_datos} resume las fuentes consideradas.
 
-\subsection{Figuras} 
-
-Al insertar figuras en la memoria se deben considerar determinadas pautas. Para empezar, usar siempre tipografía claramente legible. Luego, tener claro que \textbf{es incorrecto} escribir por ejemplo esto: ``El diseño elegido es un cuadrado, como se ve en la siguiente figura:''
-
-\begin{figure}[h]
-\centering
-\includegraphics[scale=.45]{./Figures/cuadradoAzul.png}
-\end{figure}
-
-La forma correcta de utilizar una figura es con referencias cruzadas, por ejemplo: ``Se eligió utilizar un cuadrado azul para el logo, como puede observarse en la figura \ref{fig:cuadradoAzul}''.
-
-\begin{figure}[ht]
+\begin{table}[H]
 	\centering
-	\includegraphics[scale=.45]{./Figures/cuadradoAzul.png}
-	\caption{Ilustración del cuadrado azul que se eligió para el diseño del logo.}
-	\label{fig:cuadradoAzul}
-\end{figure}
-
-El texto de las figuras debe estar siempre en español, excepto que se decida reproducir una figura original tomada de alguna referencia. En ese caso la referencia de la cual se tomó la figura debe ser indicada en el epígrafe de la figura e incluida como una nota al pie, como se ilustra en la figura \ref{fig:palabraIngles}.
-
-\begin{figure}[htpb]
-	\centering
-	\includegraphics[scale=.3]{./Figures/word.jpeg}
-	\caption{Imagen tomada de la página oficial del procesador\protect\footnotemark.}
-	\label{fig:palabraIngles}
-\end{figure}
-
-\footnotetext{Imagen tomada de \url{https://goo.gl/images/i7C70w}}
-
-La figura y el epígrafe deben conformar una unidad cuyo significado principal pueda ser comprendido por el lector sin necesidad de leer el cuerpo central de la memoria. Para eso es necesario que el epígrafe sea todo lo detallado que corresponda y si en la figura se utilizan abreviaturas entonces aclarar su significado en el epígrafe o en la misma figura.
-
-
-
-\begin{figure}[ht]
-	\centering
-	\includegraphics[scale=.37]{./Figures/questionMark.png}
-	\caption{¿Por qué de pronto aparece esta figura?}
-	\label{fig:questionMark}
-\end{figure}
-
-Nunca colocar una figura en el documento antes de hacer la primera referencia a ella, como se ilustra con la figura \ref{fig:questionMark}, porque sino el lector no comprenderá por qué de pronto aparece la figura en el documento, lo que distraerá su atención.
-
-Otra posibilidad es utilizar el entorno \textit{subfigure} para incluir más de una figura, como se puede ver en la figura \ref{fig:three graphs}. Notar que se pueden referenciar también las figuras internas individualmente de esta manera: \ref{fig:1de3}, \ref{fig:2de3} y \ref{fig:3de3}.
- 
-\begin{figure}[!htpb]
-     \centering
-     \begin{subfigure}[b]{0.3\textwidth}
-         \centering
-         \includegraphics[width=.65\textwidth]{./Figures/questionMark}
-         \caption{Un caption.}
-         \label{fig:1de3}
-     \end{subfigure}
-     \hfill
-     \begin{subfigure}[b]{0.3\textwidth}
-         \centering
-         \includegraphics[width=.65\textwidth]{./Figures/questionMark}
-         \caption{Otro.}
-         \label{fig:2de3}
-     \end{subfigure}
-     \hfill
-     \begin{subfigure}[b]{0.3\textwidth}
-         \centering
-         \includegraphics[width=.65\textwidth]{./Figures/questionMark}
-         \caption{Y otro más.}
-         \label{fig:3de3}
-     \end{subfigure}
-        \caption{Tres gráficos simples.}
-        \label{fig:three graphs}
-\end{figure}
-
-El código para generar las imágenes se encuentra disponible para su reutilización en el archivo \file{Chapter2.tex}.
-
-\subsection{Tablas}
-
-Para las tablas utilizar el mismo formato que para las figuras, sólo que el epígrafe se debe colocar arriba de la tabla, como se ilustra en la tabla \ref{tab:peces}. Observar que sólo algunas filas van con líneas visibles y notar el uso de las negritas para los encabezados.  La referencia se logra utilizando el comando \verb|\ref{<label>}| donde label debe estar definida dentro del entorno de la tabla.
-
-\begin{verbatim}
-\begin{table}[h]
-	\centering
-	\caption[caption corto]{caption largo más descriptivo}
-	\begin{tabular}{l c c}    
+	\caption{Fuentes de datos utilizadas en el trabajo.}
+	\label{tab:fuentes_datos}
+	\footnotesize
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	
+	\begin{tabularx}{\textwidth}{
+			@{}
+			>{\raggedright\arraybackslash}X
+			>{\raggedright\arraybackslash}X
+			>{\raggedright\arraybackslash}X
+			>{\raggedright\arraybackslash}X
+			@{}
+		}
 		\toprule
-		\textbf{Especie}     & \textbf{Tamaño} & \textbf{Valor}\\
+		
+		\textbf{Fuente} &
+		\textbf{Contenido principal} &
+		\textbf{Resolución y cobertura} &
+		\textbf{Condición de uso} \\ \\
+		
 		\midrule
-		Amphiprion Ocellaris & 10 cm           & \$ 6.000 \\		
-		Hepatus Blue Tang    & 15 cm           & \$ 7.000 \\
-		Zebrasoma Xanthurus  & 12 cm           & \$ 6.800 \\
+		
+		SOTR PI System &
+		Demanda eléctrica del SADI y sus regiones. &
+		Series de diez minutos, con cobertura nacional y regional. &
+		Datos internos de CAMMESA. \\ \\
+		
+		Calendarios operativos &
+		Días hábiles, fines de semana, feriados y clasificaciones especiales. &
+		Información con resolución diaria. &
+		Información propia y de fuentes oficiales. \\ \\
+		
+		SMN &
+		Observaciones y pronósticos meteorológicos. &
+		Datos horarios y diarios de estaciones argentinas. &
+		Datos abiertos oficiales con atribución. \\ \\
+		
+		Open-Meteo &
+		Observaciones y pronósticos meteorológicos. &
+		Datos horarios y diarios consultados por coordenadas geográficas. &
+		Datos sujetos a las condiciones de uso de la API. \\ \\
+		
+		The Weather Channel &
+		Pronósticos meteorológicos. &
+		Datos horarios y diarios para ubicaciones seleccionadas. &
+		Servicio de terceros para uso institucional. \\ \\
+		
 		\bottomrule
-		\hline
-	\end{tabular}
-	\label{tab:peces}
-\end{table}
-\end{verbatim}
-
-
-\begin{table}[h]
-	\centering
-	\caption[caption corto]{caption largo más descriptivo.}
-	\begin{tabular}{l c c}    
-		\toprule
-		\textbf{Especie} 	 & \textbf{Tamaño} 		& \textbf{Valor}  \\
-		\midrule
-		Amphiprion Ocellaris & 10 cm 				& \$ 6.000 \\		
-		Hepatus Blue Tang	 & 15 cm				& \$ 7.000 \\
-		Zebrasoma Xanthurus	 & 12 cm				& \$ 6.800 \\
-		\bottomrule
-		\hline
-	\end{tabular}
-	\label{tab:peces}
+	\end{tabularx}
 \end{table}
 
-En cada capítulo se debe reiniciar el número de conteo de las figuras y las tablas, por ejemplo, figura 2.1 o tabla 2.1, pero no se debe reiniciar el conteo en cada sección. Por suerte la plantilla se encarga de esto por nosotros.
 
-\subsection{Ecuaciones}
-\label{sec:Ecuaciones}
+%----------------------------------------------------------------------------------------
+\section{Modelos fundacionales para series temporales}
+\label{sec:modelos_preentrenados}
+%----------------------------------------------------------------------------------------
 
-Al insertar ecuaciones en la memoria dentro de un entorno \textit{equation}, éstas se numeran en forma automática  y se pueden referir al igual que como se hace con las figuras y tablas, por ejemplo ver la ecuación \ref{eq:metric}.
+Además de los modelos entrenados específicamente con datos del SADI, se consideró la incorporación de modelos fundacionales para series temporales. Estos modelos se preentrenan sobre colecciones amplias y heterogéneas de series, con el objetivo de aprender patrones generales de tendencia, estacionalidad y dependencia temporal. Luego pueden aplicarse a nuevas series sin reentrenamiento, modalidad conocida como \textit{zero-shot}, o adaptarse mediante procedimientos de ajuste.
 
-\begin{equation}
-	\label{eq:metric}
-	ds^2 = c^2 dt^2 \left( \frac{d\sigma^2}{1-k\sigma^2} + \sigma^2\left[ d\theta^2 + \sin^2\theta d\phi^2 \right] \right)
-\end{equation}
-                                                        
-Para generar la ecuación \ref{eq:metric} se utilizó el siguiente código:
+Entre las alternativas consideradas se encuentran Chronos y TimesFM. Chronos representa los valores de una serie mediante una discretización que permite emplear arquitecturas derivadas de modelos de lenguaje para producir distribuciones de pronóstico \cite{ansari2024chronos}. TimesFM utiliza una arquitectura basada en Transformers con procesamiento por segmentos y fue preentrenado sobre grandes volúmenes de series reales y sintéticas \cite{das2024timesfm}. Ambos constituyen modelos desarrollados por terceros y sus pesos preentrenados no fueron generados como parte del trabajo.
 
-\begin{verbatim}
-\begin{equation}
-	\label{eq:metric}
-	ds^2 = c^2 dt^2 \left( \frac{d\sigma^2}{1-k\sigma^2} + 
-	\sigma^2\left[ d\theta^2 + 
-	\sin^2\theta d\phi^2 \right] \right)
-\end{equation}
-\end{verbatim}
+La principal ventaja de estos modelos es que permiten obtener una referencia sin entrenar una red desde cero para cada variable o región. Esto resulta especialmente útil para comprobar si el conocimiento adquirido durante el preentrenamiento se transfiere a series de demanda eléctrica del SADI. Sin embargo, su utilización plantea limitaciones. Algunos modelos preentrenados procesan de forma nativa solo la historia de la variable objetivo, mientras que el problema tratado requiere aprovechar información meteorológica y calendaria. Además, los datos de preentrenamiento pueden no representar adecuadamente las particularidades del consumo argentino, su sensibilidad térmica ni las diferencias entre regiones.
+
+Por este motivo, estos modelos se consideraron como una familia adicional de métodos y no como sustitutos directos de los modelos supervisados. La comparación debe realizarse sobre los mismos períodos y métricas, diferenciando los resultados obtenidos sin ajuste de aquellos que eventualmente requieran adaptación.
+
+%----------------------------------------------------------------------------------------
+\section{Infraestructura híbrida de datos y cómputo}
+\label{sec:infraestructura_computo}
+%----------------------------------------------------------------------------------------
+
+La infraestructura adoptó un esquema híbrido compuesto por Microsoft Fabric y un servidor local de CAMMESA. Fabric concentró la mayor parte del almacenamiento, procesamiento, experimentación y visualización, mientras que el entorno local atendió los procesos que requerían conectividad con sistemas internos.
+
+Dentro de Fabric se utilizaron distintos tipos de elementos según la función requerida. Una base de datos KQL actuó como capa inicial o bronce para recibir información con un grado mínimo de elaboración. Las bases KQL están orientadas al análisis de datos temporales y pueden ser consultadas desde notebooks mediante \textit{Kusto Query Language} \cite{microsoftFabricKQL}. El repositorio relacional central se implemtentó con un \textit{Data Warehouse} \cite{microsoftFabricWarehouse}, con el objetivo de alojar las capas plata y oro. Allí se almacenaron datos normalizados, integrados y preparados para el consumo analítico mediante tablas y vistas T-SQL. También se utilizó un \textit{Data Lakehouse} \cite{microsoftFabricLakehouse}, que se reservó principalmente para archivos auxiliares y para aquellos formatos que no requerían almacenamiento relacional.
+
+Los notebooks de Fabric \cite{microsoftFabricNotebooks} proporcionaron los entornos de ejecución para Python, pandas y PySpark. También sirvieron como espacio para la experimentación con modelos y para la integración con MLflow. Por otra parte, se utilizaron \textit{Pipelines} \cite{microsoftFabricPipeline} para la orquestación entre notebooks, consultas y actividades de copia de datos. 
+
+La conexión con bases Oracle instaladas en la infraestructura de CAMMESA se realizó mediante una puerta de enlace de datos alojada en servidores de la empresa. Este componente permite que los servicios de Fabric accedan de manera controlada a fuentes locales sin exponer directamente las bases internas.
+
+El servidor local ejecutó Dagster y las bibliotecas necesarias para comunicarse con PI System y Fabric. Allí se programaron activos encargados de consultar las series internas, procesarlas con pandas y NumPy, y persistir los resultados en el Warehouse mediante autenticación de Azure. El enfoque basado en activos de Dagster facilita describir dependencias y programar actualizaciones periódicas, manteniendo separados el código de acceso a fuentes locales y los servicios administrados en la nube \cite{dagsterOverview,dagsterAssets}.
+
+Esta distribución de responsabilidades respondió a restricciones tecnológicas existentes y a la conveniencia de utilizar la plataforma institucional de CAMMESA. Fabric aporta almacenamiento centralizado, capacidad de procesamiento y servicios integrados de ciencia de datos, mientras que el servidor local conserva el acceso a fuentes que no están disponibles desde la nube. El diseño específico de los flujos, las dependencias entre componentes y los mecanismos de ejecución se desarrollan en el Capítulo~\ref{Chapter3}.
