@@ -4,12 +4,12 @@
 
 En este capítulo se presentan las tecnologías, bibliotecas, fuentes de datos e infraestructura de cómputo utilizadas como soporte del trabajo. El propósito es describir los componentes de terceros y el entorno tecnológico utilizados.
 
-La solución se apoyó principalmente en Microsoft Fabric, plataforma adoptada por CAMMESA para el almacenamiento, procesamiento y análisis de datos. Aquellas actividades que requerían acceso directo a sistemas internos o ejecución desde la red local se alojaron en una instalación de Dagster ejecutada en infraestructura propia de la empresa.
-
 %----------------------------------------------------------------------------------------
 \section{Frameworks para procesamiento y modelado}
 \label{sec:frameworks_bibliotecas}
 %----------------------------------------------------------------------------------------
+
+La solución se apoyó principalmente en Microsoft Fabric, plataforma adoptada por CAMMESA para el almacenamiento, procesamiento y análisis de datos. Aquellas actividades que requerían acceso directo a sistemas internos o ejecución desde la red local se alojaron en una instalación de Dagster ejecutada en infraestructura propia de la empresa.
 
 El lenguaje principal utilizado fue Python, debido a su amplia adopción en ciencia de datos y a la disponibilidad de bibliotecas para aprendizaje automático, series temporales y acceso a fuentes heterogéneas. Su utilización permitió mantener una base tecnológica común entre los notebooks ejecutados en Fabric y los procesos alojados en el servidor local.
 
@@ -69,7 +69,7 @@ La tabla \ref{tab:fuentes_datos} resume las fuentes consideradas.
 		\textbf{Fuente} &
 		\textbf{Contenido principal} &
 		\textbf{Resolución y cobertura} &
-		\textbf{Condición de uso} \\ \\
+		\textbf{Condición de uso} \\
 		
 		\midrule
 		

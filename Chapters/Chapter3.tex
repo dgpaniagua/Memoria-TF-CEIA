@@ -24,7 +24,7 @@ La solución se implementó sobre la arquitectura híbrida presentada en el cap�
 	\centering
 	\resizebox{\textwidth}{!}{%
 		\begin{tikzpicture}[
-			font=\scriptsize,
+			font=\footnotesize,
 			caja/.style={draw, rounded corners=2pt, align=center, text width=4.2cm,
 				minimum height=1.05cm, inner sep=3pt},
 			fuente/.style={caja, fill=gray!15},
@@ -33,7 +33,7 @@ La solución se implementó sobre la arquitectura híbrida presentada en el cap�
 			capados/.style={caja, fill=blue!12},
 			consumo/.style={caja, fill=green!14},
 			local/.style={dashed, thick},
-			etiqueta/.style={align=right, text width=2.2cm, font=\scriptsize\bfseries},
+			etiqueta/.style={align=right, text width=2.6cm, font=\footnotesize\bfseries},
 			flujo/.style={-stealth, thick, gray!70!black}
 			]
 			
@@ -47,42 +47,42 @@ La solución se implementó sobre la arquitectura híbrida presentada en el cap�
 			\node[font=\small\bfseries] at (\xp,1.05) {Pronósticos meteorológicos};
 			
 			% Etiquetas de fila
-			\node[etiqueta] at (0,\ya) {Fuentes};
-			\node[etiqueta] at (0,\yb) {Ingesta};
-			\node[etiqueta] at (0,\yc) {Capa 1};
-			\node[etiqueta] at (0,\yd) {Transformación};
-			\node[etiqueta] at (0,\ye) {Capa 2\\(warehouse)};
-			\node[etiqueta] at (0,\yf) {Capa 3\\(vistas)};
+			\node[etiqueta] at (-0.25,\ya) {Fuentes};
+			\node[etiqueta] at (-0.25,\yb) {Ingesta};
+			\node[etiqueta] at (-0.25,\yc) {Capa 1};
+			\node[etiqueta] at (-0.25,\yd) {Transformación};
+			\node[etiqueta] at (-0.25,\ye) {Capa 2\\(warehouse)};
+			\node[etiqueta] at (-0.25,\yf) {Capa 3\\(vistas)};
 			
 			% Demanda eléctrica
 			\node[fuente]  (d1) at (\xd,\ya) {SOTR (PI System)\\mediciones cada 10 minutos};
-			\node[proceso, local] (d2) at (\xd,\yb) {Activo de Dagster\\cálculo de la demanda regional};
-			\node[capauno] (d3) at (\xd,\yc) {warehouse (DEMANDA)\\\texttt{DEMANDA\_REGIONES\_10M}};
-			\node[proceso] (d4) at (\xd,\yd) {\texttt{NB\_DEMANDA\_10M\_1H}\\limpieza y agregación horaria};
-			\node[capados] (d5) at (\xd,\ye) {Esquema DEMANDA\\\texttt{DEMANDA\_REGIONES\_1H}\\\texttt{DEMANDA\_REGIONES\_DIARIA}};
+			\node[proceso, local] (d2) at (\xd,\yb) {Activo de Dagster\\demanda por región};
+			\node[capauno] (d3) at (\xd,\yc) {Warehouse\\esquema DEMANDA};
+			\node[proceso] (d4) at (\xd,\yd) {Notebook\\limpieza y agregación horaria};
+			\node[capados] (d5) at (\xd,\ye) {Esquema DEMANDA\\series horarias y diarias};
 			\node[consumo] (d6) at (\xd,\yf) {Vistas del MEM\\energía y potencias diarias};
 			
 			% Meteorología observada
 			\node[fuente]  (m1) at (\xm,\ya) {SMN (archivos de texto)\\Open-Meteo (histórico)};
 			\node[proceso, local, text width=1.7cm] (m2a) at (\xm-1.2,\yb) {Descarga de archivos del SMN};
 			\node[proceso, text width=1.7cm] (m2b) at (\xm+1.2,\yb) {Notebook de capa 1};
-			\node[capauno] (m3) at (\xm,\yc) {Base KQL \texttt{EH\_PSYD}\\\texttt{L1\_SMN\_*\_REALES}\\\texttt{L1\_OMET\_*\_REALES}};
-			\node[proceso] (m4) at (\xm,\yd) {\texttt{PPLN\_METEO}\\temperatura aparente y agregación diaria};
-			\node[capados] (m5) at (\xm,\ye) {Esquema METEO\\\texttt{L2\_SMN\_*\_REALES}\\\texttt{L2\_OMET\_*\_REALES}};
-			\node[consumo] (m6) at (\xm,\yf) {Vistas \texttt{L3\_METEO\_*}\\por estación y región};
+			\node[capauno] (m3) at (\xm,\yc) {Base KQL\\datos del SMN y Open-Meteo};
+			\node[proceso] (m4) at (\xm,\yd) {Pipeline\\temperatura aparente y agregación diaria};
+			\node[capados] (m5) at (\xm,\ye) {Esquema METEO\\series horarias y diarias};
+			\node[consumo] (m6) at (\xm,\yf) {Vistas\\por estación y región};
 			
 			% Pronósticos meteorológicos
-			\node[fuente]  (p1) at (\xp,\ya) {Open-Meteo (corridas)\\TWC y SMN};
+			\node[fuente]  (p1) at (\xp,\ya) {Open-Meteo (ejecuciones)\\TWC y SMN};
 			\node[proceso, local, text width=1.7cm] (p2a) at (\xp-1.2,\yb) {Activo de Dagster (SMN)};
 			\node[proceso, text width=1.7cm] (p2b) at (\xp+1.2,\yb) {Notebooks de Open-Meteo y TWC};
-			\node[capauno] (p3) at (\xp,\yc) {Base KQL \texttt{EH\_PSYD}\\\texttt{L1\_*\_PRONOS}};
-			\node[proceso] (p4) at (\xp,\yd) {\texttt{PPLN\_PRONOS}\\validación del SMN y agregación diaria};
-			\node[capados] (p5) at (\xp,\ye) {Esquema PRONOS\\\texttt{L2\_VALORES\_HORARIOS\_PRONOS}\\\texttt{L2\_VALORES\_DIARIOS\_PRONOS}};
-			\node[consumo] (p6) at (\xp,\yf) {Vistas \texttt{L3\_*\_PRONOS}\\por estación y región};
+			\node[capauno] (p3) at (\xp,\yc) {Base KQL\\una tabla por fuente};
+			\node[proceso] (p4) at (\xp,\yd) {Pipeline\\validación del SMN y agregación diaria};
+			\node[capados] (p5) at (\xp,\ye) {Esquema PRONOS\\series horarias y diarias};
+			\node[consumo] (p6) at (\xp,\yf) {Vistas\\por estación y región};
 			
 			% Modelado
 			\node[consumo, text width=13.6cm, minimum height=0.9cm] (mod) at (\xm,\yg)
-			{Conjuntos de modelado $\rightarrow$ entrenamiento y pronóstico $\rightarrow$ resultados en el esquema MODELOS};
+			{Conjuntos de modelado $\rightarrow$ entrenamiento y pronóstico $\rightarrow$ resultados};
 			
 			% Flechas
 			\draw[flujo] (d1) -- (d2);
@@ -140,7 +140,24 @@ El último criterio condicionó el cálculo de la temperatura aparente. Open-Met
 	\label{eq:temp_aparente}
 \end{equation}
 
-\noindent donde \(T\) es la temperatura del aire en \textdegree C, \(e = \frac{HR}{100}\,6{,}105\,\exp\!\left(\frac{17{,}27\,T}{237{,}7+T}\right)\) es la presión de vapor en hPa, \(HR\) es la humedad relativa en porcentaje, \(v_2 = 0{,}75\,v_{10}\) es la velocidad del viento reducida a 2~m de altura en m/s y \(Q = \max\!\left(0;\ 0{,}1\,(G - 550)\right)\), con \(G\) igual a la radiación solar global en W/m\textsuperscript{2}.
+\noindent donde \(T\) es la temperatura del aire en \textdegree C, \(e\) es la presión de vapor en hPa, \(v_2\) es la velocidad del viento a 2~m de altura en m/s y \(Q\) es la radiación absorbida. Estas tres magnitudes se obtienen según las ecuaciones \ref{eq:presion_vapor}, \ref{eq:viento_2m} y \ref{eq:radiacion_absorbida}:
+
+\begin{equation}
+	e = \frac{HR}{100}\; 6{,}105\, \exp\!\left(\frac{17{,}27\, T}{237{,}7 + T}\right)
+	\label{eq:presion_vapor}
+\end{equation}
+
+\begin{equation}
+	v_2 = 0{,}75\, v_{10}
+	\label{eq:viento_2m}
+\end{equation}
+
+\begin{equation}
+	Q = \max\left(0;\ 0{,}1\,(G - 550)\right)
+	\label{eq:radiacion_absorbida}
+\end{equation}
+
+\noindent donde \(HR\) es la humedad relativa en porcentaje, \(v_{10}\) es la velocidad del viento a 10~m de altura en m/s y \(G\) es la radiación solar global en W/m\textsuperscript{2}.
 
 En consecuencia, la temperatura aparente de los datos observados se calcula con la misma expresión. Se utilizan la temperatura, la humedad y el viento provistos por el SMN, y la radiación de Open-Meteo para la misma estación y hora (ya que el SMN no informa datos de radiación ni nubosidad observados). Una formulación sin radiación produciría valores sistemáticamente inferiores en las horas de mayor insolación, y el modelo recibiría en producción una variable con una distribución distinta de la utilizada durante el entrenamiento.
 
@@ -159,16 +176,18 @@ La demanda eléctrica se obtiene desde PI System mediante PIconnect. Debido a qu
 El cálculo regional combina generación e intercambios medidos en el SOTR. Para la partición en regiones del SADI se utilizó la definición implementada por CAMMESA, que se presenta en la figura \ref{fig:regiones_electricas} y comprende las siguientes regiones:
 
 \begin{itemize}
-	\item GBA: Gran Buenos Aires.
+	\item GBA: Ciudad Autónoma de Buenos Aires y partidos del Gran Buenos Aires.
 	\item CEN: provincias de Córdoba y San Luis.
 	\item LIT: provincias de Santa Fe y Entre Ríos.
 	\item CUY: provincias de Mendoza y San Juan.
 	\item NEA: provincias de Corrientes, Misiones, Chaco y Formosa.
 	\item NOA: provincias de Salta, Jujuy, Catamarca, La Rioja, Tucumán y Santiago del Estero.
 	\item COM: provincias de Rio Negro, Neuquén y La Pampa.
-	\item PBA: provincia de Buenos Aires. Es importante mencionar que, para el pronóstico de demanda, esta región se divide en norte (PBN) y sur (PBS). Esto se debe a que presentan patrones de consumo distintos, en primer lugar por la variación de condiciones climáticas producto de la gran extensión territorial y, en segundo lugar, por las características de los usuarios (el norte está notablemente más industrializado que el sur).
+	\item PBA: provincia de Buenos Aires, excepto los partidos del Gran Buenos Aires.
 	\item PAT: provincias de Chubut, Santa Cruz y Tierra del Fuego.
 \end{itemize}
+
+Para el pronóstico de demanda, la región PBA se divide en norte (PBN) y sur (PBS). Ambas subregiones presentan patrones de consumo distintos, en primer lugar por la variación de las condiciones climáticas asociada con la gran extensión territorial y, en segundo lugar, por las características de los usuarios, ya que el norte está notablemente más industrializado que el sur.
 
 \begin{figure}[H]
 	\centering
@@ -225,7 +244,7 @@ A modo de ejemplo, la demanda de LIT corregida por pérdidas para el instante de
 \end{equation}
 
 
-Resolviendo,
+Al resolver las operaciones, resulta:
 
 \begin{equation}
 	D_{\mathrm{LIT}}
@@ -292,7 +311,7 @@ El flujo de datos meteorológicos observados integra las mediciones de las estac
 
 La primera etapa se ejecuta en el notebook \code{NB\_METEO\_L1}. Para el SMN se procesan los archivos de observaciones diarias y de datos horarios. Para Open-Meteo se realizan consultas por coordenadas asociadas con estaciones de referencia. El rango de fechas se recibe como parámetro y, cuando no se informa, el notebook utiliza el día anterior a la ejecución.
 
-Los archivos descargados del SMN se conservan en un lakehouse. Esta copia permite mantener el insumo original y volver a procesarlo si resulta necesario. Los datos interpretados se escriben en la base KQL \code{EH\_PSYD}, utilizada como capa~1. Allí se almacenan, entre otras variables, temperatura, humedad relativa, presión, dirección y velocidad del viento para la resolución horaria, y temperaturas máxima y mínima para la resolución diaria. Las tablas de Open-Meteo incorporan además temperatura aparente, nubosidad, precipitación y radiación solar, según la resolución de cada conjunto.
+Los archivos descargados del SMN se conservan en un lakehouse. Esta copia permite mantener el insumo original y volver a procesarlo si resulta necesario. Los datos interpretados se escriben en la base KQL \code{EH\_PSYD}, utilizada como capa~1. Allí se almacenan, entre otras variables, temperatura, humedad relativa, presión, dirección y velocidad del viento para la resolución horaria, y temperaturas máxima y mínima para la resolución diaria. Las tablas de Open-Meteo incorporan, además, temperatura aparente, nubosidad, precipitación y radiación solar, según la resolución de cada conjunto.
 
 La persistencia en KQL se realiza por lotes y, cuando el volumen serializado supera el tamaño previsto para una operación, la carga se divide en bloques. El resultado de esta etapa es una representación cercana a las fuentes, separada por proveedor y resolución.
 
@@ -302,7 +321,44 @@ La transferencia desde la capa~1 hacia la capa~2 se orquesta mediante el pipelin
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{./Figures/pipeline_meteo.png}
+	\resizebox{\textwidth}{!}{%
+		\begin{tikzpicture}[
+			font=\footnotesize,
+			act/.style={draw, rounded corners=2pt, align=center, fill=white, text width=3.0cm,
+				minimum height=1.1cm, inner sep=3pt},
+			var/.style={act, fill=gray!12},
+			nb/.style={act, fill=orange!14},
+			busq/.style={act, fill=yellow!18},
+			script/.style={act, fill=blue!8},
+			copia/.style={act, fill=blue!18},
+			falla/.style={act, fill=red!12},
+			tipo/.style={font=\scriptsize, text=gray!60!black, anchor=south west, inner sep=1pt},
+			ok/.style={-stealth, thick, green!45!black},
+			linea/.style={thick, green!45!black},
+			comp/.style={-stealth, thick, dashed, blue!60!black},
+			err/.style={-stealth, thick, red!70!black}
+			]
+			% Variables y notebook de capa 1
+			\node[var] (v1) at (3.8,0) {Período desde};
+			\node[var] (v2) at (7.6,0) {Período hasta};
+			\node[nb] (nb) at (5.7,-1.9) {\texttt{NB\_METEO\_L1}\\carga de capa 1};
+			\node[busq] (est) at (5.7,-3.8) {Estaciones vigentes en el período};
+			% Ramas por tabla de capa 2
+			\foreach \x/\n/\t in {0/s1/SMN horario, 3.8/s2/SMN diario, 7.6/s3/Open-Meteo horario, 11.4/s4/Open-Meteo diario} {
+				\node[script] (\n) at (\x,-6.0) {Limpieza del período\\\t};
+				\node[copia] (c\n) at (\x,-8.3) {Copia a capa 2\\\t};
+				\draw[ok] (\n) -- (c\n);
+				\draw[ok] (est.south) -- (5.7,-4.9) -| (\n.north);
+			}
+			% Etiquetas de tipo de actividad
+			\foreach \n/\t in {v1/Variable, v2/Variable, nb/Notebook, est/Búsqueda, s1/Script, s2/Script, s3/Script, s4/Script, cs1/Copia, cs2/Copia, cs3/Copia, cs4/Copia}
+				\node[tipo] at (\n.north west) {\t};
+			% Dependencias
+			\draw[ok] (v1.south) -- (3.8,-0.95) -| (nb.north);
+			\draw[ok] (v2.south) -- (7.6,-0.95) -| (nb.north);
+			\draw[ok] (nb) -- (est);
+		\end{tikzpicture}%
+	}
 	\caption{Pipeline de Fabric para la orquestación de datos meteorológicos observados.}
 	\label{fig:pipeline_meteo}
 \end{figure}
@@ -316,7 +372,7 @@ La escritura de los datos meteorológicos utiliza claves temporales y de estaci�
 \label{subsec:pipeline_pronosticos}
 %----------------------------------------------------------------------------------------
 
-Los pronósticos meteorológicos constituyen la información exógena disponible al momento de estimar la demanda futura. A diferencia de una observación, un valor pronosticado depende de la fecha en que fue emitido. Para un mismo día objetivo existen tantos valores como corridas lo incluyen, y su precisión disminuye a medida que aumenta la anticipación. Por este motivo, el flujo se diseñó para conservar cada corrida identificada por su fecha de cálculo (\code{FECHA\_CALCULO}) y por el modelo o servicio que la generó (\code{PRON\_ID}). Esta estructura permite evaluar los modelos de demanda con la información que efectivamente habría estado disponible en cada fecha y evita utilizar observaciones posteriores como si fueran pronósticos.
+Los pronósticos meteorológicos constituyen la información exógena disponible al momento de estimar la demanda futura. A diferencia de una observación, un valor pronosticado depende de la fecha en que fue emitido. Para un mismo día objetivo existen tantos valores como ejecuciones del modelo lo incluyen, y su precisión disminuye a medida que aumenta la anticipación. Por este motivo, el flujo se diseñó para conservar cada ejecución identificada por su fecha de cálculo (\code{FECHA\_CALCULO}) y por el modelo o servicio que la generó (\code{PRON\_ID}). Esta estructura permite evaluar los modelos de demanda con la información que efectivamente habría estado disponible en cada fecha y evita utilizar observaciones posteriores como si fueran pronósticos.
 
 \subsubsection{Fuentes e ingesta en capa~1}
 
@@ -332,10 +388,10 @@ La tabla \ref{tab:fuentes_pronosticos} resume las fuentes incorporadas y el proc
 	
 	\begin{tabularx}{\textwidth}{
 			@{}
-			>{\raggedright\arraybackslash}X
-			>{\raggedright\arraybackslash}X
-			>{\raggedright\arraybackslash}X
-			>{\raggedright\arraybackslash}X
+			>{\raggedright\arraybackslash\hsize=0.9\hsize}X
+			>{\raggedright\arraybackslash\hsize=0.7\hsize}X
+			>{\raggedright\arraybackslash\hsize=0.8\hsize}X
+			>{\raggedright\arraybackslash\hsize=1.6\hsize}X
 			@{}
 		}
 		\toprule
@@ -343,7 +399,7 @@ La tabla \ref{tab:fuentes_pronosticos} resume las fuentes incorporadas y el proc
 		\textbf{Fuente} &
 		\textbf{Proceso de ingesta} &
 		\textbf{Resolución y horizonte} &
-		\textbf{Variables principales} \\ \\
+		\textbf{Variables principales} \\
 		
 		\midrule
 		
@@ -366,9 +422,9 @@ La tabla \ref{tab:fuentes_pronosticos} resume las fuentes incorporadas y el proc
 	\end{tabularx}
 \end{table}
 
-Para Open-Meteo se utilizó la API de corridas individuales (\textit{Single Runs}) \cite{openMeteoSingleRuns}, que devuelve el horizonte completo de una inicialización específica de cada modelo. Se adoptó la corrida de las 00 UTC (\textit{Coordinated Universal Time}), que se publica durante la madrugada en Argentina y queda disponible antes del cálculo diario. La API de pronósticos históricos (\textit{Historical Forecast}) de Open-Meteo \cite{openMeteoHistoricalForecast} no resulta adecuada para este fin porque entrega una combinación de distintas corridas, lo que no permite contar con la misma información que se utilizará en producción. 
+Para Open-Meteo se utilizó la API de ejecuciones individuales (\textit{Single Runs}) \cite{openMeteoSingleRuns}, que devuelve el horizonte completo de una inicialización específica de cada modelo. Se adoptó la ejecución de las 00 UTC (\textit{Coordinated Universal Time}), que se publica durante la madrugada en Argentina y queda disponible antes del cálculo diario. La API de pronósticos históricos (\textit{Historical Forecast}) de Open-Meteo \cite{openMeteoHistoricalForecast} no resulta adecuada para este fin porque entrega una combinación de distintas ejecuciones, lo que no permite contar con la misma información que se utilizará en producción. 
 
-Los modelos, sus horizontes y sus períodos de vigencia se leen de una tabla del warehouse llamada \code{PRONOS.PRONOS\_TOTALES}, y las consultas se realizan por las coordenadas de las estaciones vigentes en cada fecha de cálculo. El notebook de Open-Meteo recibe un rango de fechas, procesa cada corrida de manera independiente y convierte las estampas de tiempo a hora local, con el mismo criterio aplicado a los datos observados.
+Los modelos, sus horizontes y sus períodos de vigencia se leen de una tabla del warehouse llamada \code{PRONOS.PRONOS\_TOTALES}, y las consultas se realizan por las coordenadas de las estaciones vigentes en cada fecha de cálculo. El notebook de Open-Meteo recibe un rango de fechas, procesa cada ejecución de manera independiente y convierte las estampas de tiempo a hora local, con el mismo criterio aplicado a los datos observados.
 
 The Weather Channel (TWC) y el SMN solo publican el pronóstico vigente, por lo que su historia se construye a partir de la ejecución diaria. El SMN se consulta desde el servidor local mediante Dagster, por las restricciones de acceso descritas en el capítulo~\ref{Chapter2}. Los resultados de todas las fuentes se almacenan en la base KQL, en una tabla de capa~1 por fuente.
 
@@ -376,19 +432,74 @@ The Weather Channel (TWC) y el SMN solo publican el pronóstico vigente, por lo 
 
 El período de tiempo establecido para el conjunto de datos de test se fijó desde el 01/09/2025 hasta el 31/08/2026, con el objetivo de poder evaluar el desempeño de los modelos en todas las estaciones del año. 
 
-Sin embargo, no todas las fuentes tienen este período disponible. Open-Meteo conserva las corridas del modelo IFS desde marzo de 2024 y las del resto de los modelos desde abril de 2026, mientras que el SMN y TWC no permiten recuperar pronósticos pasados. Para cubrir el período faltante se utilizaron archivos acumulados por un proceso previo de CAMMESA, con el que se completó la historia del SMN, TWC y el modelo ICON. Por lo tanto, para los modelos GFS y UKMO la fecha inicial quedó en abril de 2026. Los datos se cargaron en las tablas de capa~1 mediante un proceso implementado en un notebook de Fabric que los recuperó y acondicionó para almacenarlos con el mismo formato.
+Sin embargo, no todas las fuentes tienen este período disponible. Open-Meteo conserva las ejecuciones del modelo IFS desde marzo de 2024 y las del resto de los modelos desde abril de 2026, mientras que el SMN y TWC no permiten recuperar pronósticos pasados. Para cubrir el período faltante se utilizaron archivos acumulados por un proceso previo de CAMMESA, con el que se completó la historia del SMN, TWC y el modelo ICON. Por lo tanto, para los modelos GFS y UKMO la fecha inicial quedó en abril de 2026. Los datos se cargaron en las tablas de capa~1 mediante un proceso implementado en un notebook de Fabric que los recuperó y acondicionó para almacenarlos con el mismo formato.
 
 Los archivos del proceso previo están organizados por región eléctrica y no por estación. Cada región se asoció con una estación meteorológica: para el SMN y TWC, a partir de la localidad consultada; para el modelo ICON, mediante la estación cuya serie de Open-Meteo presentó menor diferencia con la serie del archivo en los períodos que se contaba con ambos pronósticos.
 
 \subsubsection{Transformación a capa~2 y orquestación}
 
-La capa~2 de pronósticos se compone de dos tablas del esquema \code{PRONOS}. La tabla horaria \code{L2\_VALORES\_HORARIOS\_PRONOS} contiene los valores de Open-Meteo con la convención horaria utilizada en CAMMESA y la anticipación en días. La tabla diaria \code{L2\_VALORES\_DIARIOS\_PRONOS} integra las tres fuentes con las mismas variables que la tabla diaria de observaciones. Para Open-Meteo, los valores diarios se agregan a partir de los horarios con los criterios de los datos observados y solo se conservan los días con las 24 horas disponibles. Para TWC y el SMN, los valores informados por franjas se asignan a las horas de referencia más próximas: el día y la noche a las 15 y 21 horas, y la mañana y la tarde a las 8 y 15 horas. Esta asignación constituye una aproximación, dado que dichos valores representan un intervalo y no una hora puntual. Las variables que una fuente no provee quedan sin valor.
+La capa~2 de pronósticos se compone de dos tablas del esquema \code{PRONOS}. La tabla horaria \code{L2\_VALORES\_HORARIOS\_PRONOS} contiene los valores de Open-Meteo con la convención horaria utilizada en CAMMESA y la anticipación en días. La tabla diaria \code{L2\_VALORES\_DIARIOS\_PRONOS} integra las tres fuentes con las mismas variables que la tabla diaria de observaciones. Para Open-Meteo, los valores diarios se agregan a partir de los horarios con los criterios de los datos observados y solo se conservan los días con las 24 horas disponibles. Para TWC y el SMN, los valores informados por franjas se asignan a las horas de referencia más próximas: el día a las 15 y la noche a las 21 horas, y la mañana y la tarde a las 8 y 15 horas, respectivamente. Esta asignación constituye una aproximación, dado que dichos valores representan un intervalo y no una hora puntual. Las variables que una fuente no provee quedan sin valor.
 
 La orquestación se implementó en el pipeline \code{PPLN\_PRONOS}, que se presenta en la figura \ref{fig:pipeline_pronos}. El pipeline recibe un período de fechas de cálculo y, en la ejecución diaria, procesa la fecha en curso. En primer lugar, ejecuta en paralelo los notebooks de Open-Meteo y TWC, junto con un notebook que verifica la carga del SMN realizada por Dagster. Esta validación espera hasta una hora a que estén disponibles todas las estaciones vigentes. Luego, cada tabla de capa~2 se actualiza mediante la eliminación del período a insertar (para evitar duplicación de datos) y una actividad de copia desde la base KQL (capa~1). Si el pronóstico del SMN no se completa, la tabla diaria se actualiza igualmente con las fuentes restantes y la ejecución finaliza con error para advertir el faltante. Como todas las cargas son idempotentes por fecha de cálculo, basta con repetir la ejecución para ese día una vez resuelto el problema.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{./Figures/pipeline_pronos.png}
+	\resizebox{\textwidth}{!}{%
+		\begin{tikzpicture}[
+			font=\footnotesize,
+			act/.style={draw, rounded corners=2pt, align=center, fill=white, text width=3.0cm,
+				minimum height=1.1cm, inner sep=3pt},
+			var/.style={act, fill=gray!12},
+			nb/.style={act, fill=orange!14},
+			busq/.style={act, fill=yellow!18},
+			script/.style={act, fill=blue!8},
+			copia/.style={act, fill=blue!18},
+			falla/.style={act, fill=red!12},
+			tipo/.style={font=\scriptsize, text=gray!60!black, anchor=south west, inner sep=1pt},
+			ok/.style={-stealth, thick, green!45!black},
+			linea/.style={thick, green!45!black},
+			comp/.style={-stealth, thick, dashed, blue!60!black},
+			err/.style={-stealth, thick, red!70!black}
+			]
+			% Variables
+			\node[var] (v1) at (2.1,0) {Período desde};
+			\node[var] (v2) at (6.3,0) {Período hasta};
+			% Capa 1 y validación
+			\node[nb, text width=3.5cm] (om) at (0,-2.0) {\texttt{NB\_PRONO\_OMET\_L1}\\Open-Meteo};
+			\node[nb, text width=3.5cm] (tw) at (4.2,-2.0) {\texttt{NB\_PRONO\_WEATHER\_L1}\\TWC};
+			\node[nb, text width=3.5cm] (va) at (8.4,-2.0) {Validación de la carga del SMN};
+			% Capa 2
+			\node[script, text width=3.5cm] (lh) at (0,-4.3) {Limpieza del período\\tabla horaria};
+			\node[script, text width=3.5cm] (ld) at (4.2,-4.3) {Limpieza del período\\tabla diaria};
+			\node[copia, text width=3.5cm] (ch) at (0,-6.5) {Copia a capa 2\\tabla horaria};
+			\node[copia, text width=3.5cm] (cd) at (4.2,-6.5) {Copia a capa 2\\tabla diaria};
+			\node[falla, text width=3.5cm] (fa) at (8.4,-8.7) {Error: pronóstico del SMN incompleto};
+			% Etiquetas de tipo de actividad
+			\foreach \n/\t in {v1/Variable, v2/Variable, om/Notebook, tw/Notebook, va/Notebook, lh/Script, ld/Script, ch/Copia, cd/Copia, fa/Falla}
+				\node[tipo] at (\n.north west) {\t};
+			% Dependencias desde las variables
+			\draw[linea] (v1.south) -- (2.1,-0.95);
+			\draw[linea] (v2.south) -- (6.3,-0.95);
+			\draw[linea] (0,-0.95) -- (8.4,-0.95);
+			\foreach \n/\x in {om/0, tw/4.2, va/8.4}
+				\draw[ok] (\x,-0.95) -- (\n.north);
+			% Tabla horaria
+			\draw[ok] (om) -- (lh);
+			\draw[ok] (lh) -- (ch);
+			% Tabla diaria
+			\draw[ok] (om.south) -- (0,-3.2) -| ([xshift=-6mm]ld.north);
+			\draw[ok] (tw) -- (ld);
+			\draw[ok] (ld) -- (cd);
+			\draw[comp] ([xshift=-6mm]va.south) |- (cd.east);
+			% Falla
+			\draw[err] ([xshift=6mm]va.south) -- ([xshift=6mm]fa.north);
+			\draw[comp] (cd.south) |- (fa.west);
+			% Leyenda
+			\draw[ok] (-1.2,-10.2) -- (-0.4,-10.2) node[right, text=black] {Si finaliza correctamente};
+			\draw[comp] (3.4,-10.2) -- (4.2,-10.2) node[right, text=black] {Al finalizar};
+			\draw[err] (6.6,-10.2) -- (7.4,-10.2) node[right, text=black] {Si finaliza con error};
+		\end{tikzpicture}%
+	}
 	\caption{Pipeline de Fabric para la orquestación de pronósticos meteorológicos.}
 	\label{fig:pipeline_pronos}
 \end{figure}
