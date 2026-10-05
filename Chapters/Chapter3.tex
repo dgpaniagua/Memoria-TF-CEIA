@@ -11,39 +11,152 @@ En este capítulo se describe el diseño y la implementación de la solución de
 \label{sec:pipeline_datos}
 %----------------------------------------------------------------------------------------
 
-El sistema de pronóstico requiere integrar series eléctricas, meteorológicas y calendarias con diferentes resoluciones temporales, coberturas geográficas y mecanismos de acceso. Por este motivo, antes de abordar la construcción y evaluación de los modelos se diseñó un pipeline de datos que automatiza la extracción, el procesamiento, la validación y la persistencia de la información. El objetivo de esta etapa fue disponer de conjuntos de datos consistentes y trazables, adecuados tanto para el entrenamiento como para la ejecución periódica de pronósticos.
-
-La solución se implementó sobre la arquitectura híbrida presentada en el capítulo~\ref{Chapter2}. Los procesos que necesitan conectividad con sistemas internos de CAMMESA se ejecutan en un servidor local mediante Dagster. El almacenamiento y las transformaciones posteriores se concentran en Microsoft Fabric, donde se utilizan una base de datos KQL para la recepción inicial de determinados datos, un Data Warehouse para las capas estructuradas y Pipelines y notebooks para la orquestación y el procesamiento. Esta separación evita exponer directamente las fuentes internas y, al mismo tiempo, centraliza en Fabric la información utilizada por los modelos.
-
-El pipeline se organizó en tres flujos principales, que obtienen y transforman los siguientes grupos de variables:
-
-\begin{enumerate}
-	\item Demanda eléctrica.
-	\item Datos meteorológicos reales.
-	\item Pronósticos meteorológicos. 
-\end{enumerate}
-
-La información calendaria se incorpora posteriormente mediante tablas de existentes en las bases de datos de CAMMESA, de modo que pueda combinarse con las series eléctricas y meteorológicas utilizando la fecha como clave temporal.
+El sistema de pronóstico requiere integrar series eléctricas, meteorológicas y calendarias con distintas resoluciones temporales, coberturas geográficas y condiciones de acceso. Para ello se diseñó un pipeline que automatiza la extracción, la validación, la transformación y la persistencia de los datos, con el objetivo de disponer de conjuntos consistentes y trazables tanto para el entrenamiento como para la ejecución periódica de los pronósticos. En esta sección se presentan, en primer lugar, la arquitectura y los criterios de diseño comunes y, a continuación, los tres flujos que componen el pipeline: demanda eléctrica, datos meteorológicos observados y pronósticos meteorológicos.
 
 %----------------------------------------------------------------------------------------
-\subsection{Criterios de diseño del pipeline}
+\subsection{Arquitectura y criterios de diseño}
 \label{subsec:criterios_pipeline}
 %----------------------------------------------------------------------------------------
 
-El diseño se basó en cuatro criterios. En primer lugar, se buscó reducir la intervención manual en la obtención y actualización de datos. Las tareas repetitivas se encapsularon en activos de Dagster, notebooks y actividades de Pipeline, según el entorno desde el cual debía accederse a cada fuente. En segundo lugar, se preservó la granularidad original durante las primeras etapas. La demanda se almacena inicialmente con resolución de diez minutos y los datos meteorológicos conservan las resoluciones horaria o diaria provistas por cada fuente. Las agregaciones necesarias para el modelado se realizan en capas posteriores.
+La solución se implementó sobre la arquitectura híbrida presentada en el capítulo~\ref{Chapter2}. Los procesos que requieren acceso a sistemas internos de CAMMESA, o a fuentes con restricciones de acceso desde el exterior, se ejecutan en un servidor local mediante Dagster. El almacenamiento y las transformaciones se concentran en Microsoft Fabric: una base de datos KQL recibe los datos meteorológicos con un grado mínimo de elaboración, el warehouse aloja las capas estructuradas, un lakehouse conserva los archivos de origen, y los notebooks y pipelines ejecutan y orquestan el procesamiento. La figura~\ref{fig:diagrama_pipeline} resume los tres flujos y las etapas que atraviesa cada uno.
 
-En tercer lugar, se incorporaron controles de calidad antes de generar las variables de entrenamiento. Estos controles abarcan la completitud temporal, la coherencia entre la demanda nacional y la suma regional, la consistencia de la partición de la provincia de Buenos Aires y la identificación de valores anómalos en las series horarias. Finalmente, se separaron los datos originales de los valores corregidos. Esta decisión permite conservar trazabilidad sobre las transformaciones y distinguir los registros que requirieron tratamiento.
+\begin{figure}[H]
+	\centering
+	\resizebox{\textwidth}{!}{%
+		\begin{tikzpicture}[
+			font=\scriptsize,
+			caja/.style={draw, rounded corners=2pt, align=center, text width=4.2cm,
+				minimum height=1.05cm, inner sep=3pt},
+			fuente/.style={caja, fill=gray!15},
+			proceso/.style={caja, fill=white},
+			capauno/.style={caja, fill=orange!18},
+			capados/.style={caja, fill=blue!12},
+			consumo/.style={caja, fill=green!14},
+			local/.style={dashed, thick},
+			etiqueta/.style={align=right, text width=2.2cm, font=\scriptsize\bfseries},
+			flujo/.style={-stealth, thick, gray!70!black}
+			]
+			
+			% Columnas por flujo y filas por etapa
+			\def\xd{3.6}  \def\xm{8.3}  \def\xp{13.0}
+			\def\ya{0}    \def\yb{-1.55} \def\yc{-3.1} \def\yd{-4.65} \def\ye{-6.2} \def\yf{-7.75} \def\yg{-9.3}
+			
+			% Encabezados de columna
+			\node[font=\small\bfseries] at (\xd,1.05) {Demanda eléctrica};
+			\node[font=\small\bfseries] at (\xm,1.05) {Meteorología observada};
+			\node[font=\small\bfseries] at (\xp,1.05) {Pronósticos meteorológicos};
+			
+			% Etiquetas de fila
+			\node[etiqueta] at (0,\ya) {Fuentes};
+			\node[etiqueta] at (0,\yb) {Ingesta};
+			\node[etiqueta] at (0,\yc) {Capa 1};
+			\node[etiqueta] at (0,\yd) {Transformación};
+			\node[etiqueta] at (0,\ye) {Capa 2\\(warehouse)};
+			\node[etiqueta] at (0,\yf) {Capa 3\\(vistas)};
+			
+			% Demanda eléctrica
+			\node[fuente]  (d1) at (\xd,\ya) {SOTR (PI System)\\mediciones cada 10 minutos};
+			\node[proceso, local] (d2) at (\xd,\yb) {Activo de Dagster\\cálculo de la demanda regional};
+			\node[capauno] (d3) at (\xd,\yc) {warehouse (DEMANDA)\\\texttt{DEMANDA\_REGIONES\_10M}};
+			\node[proceso] (d4) at (\xd,\yd) {\texttt{NB\_DEMANDA\_10M\_1H}\\limpieza y agregación horaria};
+			\node[capados] (d5) at (\xd,\ye) {Esquema DEMANDA\\\texttt{DEMANDA\_REGIONES\_1H}\\\texttt{DEMANDA\_REGIONES\_DIARIA}};
+			\node[consumo] (d6) at (\xd,\yf) {Vistas del MEM\\energía y potencias diarias};
+			
+			% Meteorología observada
+			\node[fuente]  (m1) at (\xm,\ya) {SMN (archivos de texto)\\Open-Meteo (histórico)};
+			\node[proceso, local, text width=1.7cm] (m2a) at (\xm-1.2,\yb) {Descarga de archivos del SMN};
+			\node[proceso, text width=1.7cm] (m2b) at (\xm+1.2,\yb) {Notebook de capa 1};
+			\node[capauno] (m3) at (\xm,\yc) {Base KQL \texttt{EH\_PSYD}\\\texttt{L1\_SMN\_*\_REALES}\\\texttt{L1\_OMET\_*\_REALES}};
+			\node[proceso] (m4) at (\xm,\yd) {\texttt{PPLN\_METEO}\\temperatura aparente y agregación diaria};
+			\node[capados] (m5) at (\xm,\ye) {Esquema METEO\\\texttt{L2\_SMN\_*\_REALES}\\\texttt{L2\_OMET\_*\_REALES}};
+			\node[consumo] (m6) at (\xm,\yf) {Vistas \texttt{L3\_METEO\_*}\\por estación y región};
+			
+			% Pronósticos meteorológicos
+			\node[fuente]  (p1) at (\xp,\ya) {Open-Meteo (corridas)\\TWC y SMN};
+			\node[proceso, local, text width=1.7cm] (p2a) at (\xp-1.2,\yb) {Activo de Dagster (SMN)};
+			\node[proceso, text width=1.7cm] (p2b) at (\xp+1.2,\yb) {Notebooks de Open-Meteo y TWC};
+			\node[capauno] (p3) at (\xp,\yc) {Base KQL \texttt{EH\_PSYD}\\\texttt{L1\_*\_PRONOS}};
+			\node[proceso] (p4) at (\xp,\yd) {\texttt{PPLN\_PRONOS}\\validación del SMN y agregación diaria};
+			\node[capados] (p5) at (\xp,\ye) {Esquema PRONOS\\\texttt{L2\_VALORES\_HORARIOS\_PRONOS}\\\texttt{L2\_VALORES\_DIARIOS\_PRONOS}};
+			\node[consumo] (p6) at (\xp,\yf) {Vistas \texttt{L3\_*\_PRONOS}\\por estación y región};
+			
+			% Modelado
+			\node[consumo, text width=13.6cm, minimum height=0.9cm] (mod) at (\xm,\yg)
+			{Conjuntos de modelado $\rightarrow$ entrenamiento y pronóstico $\rightarrow$ resultados en el esquema MODELOS};
+			
+			% Flechas
+			\draw[flujo] (d1) -- (d2);
+			\draw[flujo] (d2) -- (d3);
+			\foreach \c in {m,p} {
+				\draw[flujo] (\c1.south -| \c2a) -- (\c2a);
+				\draw[flujo] (\c1.south -| \c2b) -- (\c2b);
+				\draw[flujo] (\c2b) -- (\c2b |- \c3.north);
+			}
+			% Los archivos del SMN se procesan en el notebook; el activo del SMN escribe directamente en KQL
+			\draw[flujo] (m2a) -- (m2b);
+			\draw[flujo] (p2a) -- (p2a |- p3.north);
+			\foreach \c in {d,m,p} {
+				\draw[flujo] (\c3) -- (\c4);
+				\draw[flujo] (\c4) -- (\c5);
+			}
+			\draw[flujo] (d5) -- (d6);
+			\draw[flujo] (m5) -- (m6);
+			\draw[flujo] (p5) -- (p6);
+			\draw[flujo] (d6) -- (d6 |- mod.north);
+			\draw[flujo] (m6) -- (m6 |- mod.north);
+			\draw[flujo] (p6) -- (p6 |- mod.north);
+			
+			% Leyenda
+			\node[proceso, local, text width=2.6cm, minimum height=0.55cm] at (3.4,-10.5) {Servidor local};
+			\node[proceso, text width=2.6cm, minimum height=0.55cm] at (6.5,-10.5) {Microsoft Fabric};
+			\node[capauno, text width=2.0cm, minimum height=0.55cm] at (9.3,-10.5) {Capa 1};
+			\node[capados, text width=2.0cm, minimum height=0.55cm] at (11.7,-10.5) {Capa 2};
+			\node[consumo, text width=2.0cm, minimum height=0.55cm] at (14.1,-10.5) {Capa 3 y modelado};
+		\end{tikzpicture}%
+	}
+	\caption{Diagrama general del pipeline de datos: flujos, etapas de procesamiento y capas de persistencia.}
+	\label{fig:diagrama_pipeline}
+\end{figure}
 
-La persistencia se estructuró mediante capas. La capa~1 recibe datos con un grado mínimo de elaboración y conserva una representación cercana a la fuente. La capa~2 contiene información validada, tipificada e integrada. Sobre estas tablas se construyen vistas y conjuntos derivados orientados al consumo analítico y al modelado. Esta organización evita aplicar transformaciones irreversibles durante la ingesta y facilita repetir los procesos cuando se modifican las reglas de limpieza.
+La persistencia se organizó en tres capas. La capa~1 conserva una representación cercana a la fuente, sin transformaciones irreversibles. La capa~2 contiene datos validados, tipificados e integrados con las dimensiones del warehouse, como las estaciones meteorológicas y las regiones eléctricas. La capa~3 está formada por vistas orientadas al consumo analítico y al modelado, como los agregados del MEM o los valores meteorológicos por región. La demanda constituye una excepción: al provenir de un proceso local, su capa~1 se escribe directamente en el warehouse. Esta separación permite repetir las transformaciones cuando se modifican las reglas de procesamiento, sin volver a consultar las fuentes.
+
+Sobre esta arquitectura se aplicaron los siguientes criterios, comunes a los tres flujos:
+
+\begin{itemize}
+	\item Automatización: la obtención y la actualización de los datos se encapsularon en activos de Dagster, notebooks y pipelines, de modo que la ejecución diaria no requiera intervención manual.
+	\item Preservación de la granularidad: la demanda se almacena con resolución de diez minutos y los datos meteorológicos con la resolución horaria o diaria de cada fuente. Las agregaciones se realizan en las capas posteriores.
+	\item Reproceso sin duplicados: cada proceso recibe un período de fechas y reemplaza los registros de ese período, por lo que una ejecución puede repetirse sin generar versiones duplicadas de un mismo dato.
+	\item Calidad y trazabilidad: los controles de completitud, coherencia y valores anómalos se aplican antes de generar las variables de entrenamiento, y los valores corregidos se conservan junto con los originales.
+	\item Referencia temporal y geográfica común: las marcas temporales se expresan en hora local con la convención horaria de CAMMESA, y las estaciones y regiones se vinculan mediante dimensiones con períodos de vigencia.
+	\item Coherencia entre entrenamiento y producción: cada variable se define de la misma manera para los datos observados, utilizados en el entrenamiento, y para los pronosticados, utilizados en la generación de pronósticos.
+\end{itemize}
+
+La información calendaria se obtiene de tablas existentes en las bases de datos de CAMMESA y se combina con las series eléctricas y meteorológicas mediante la fecha.
+
+El último criterio condicionó el cálculo de la temperatura aparente. Open-Meteo pone a disposición esta variable a través de su API y la calcula según la formulación de Steadman \cite{steadman1994apparent}, con las adaptaciones de su implementación \cite{openMeteoCodigo}, que se expresan en la ecuación \ref{eq:temp_aparente}:
+
+\begin{equation}
+	AT = T + 0{,}348\,e - 0{,}70\,v_2 + 0{,}70\,\frac{Q}{v_2 + 10} - 4{,}25
+	\label{eq:temp_aparente}
+\end{equation}
+
+\noindent donde \(T\) es la temperatura del aire en \textdegree C, \(e = \frac{HR}{100}\,6{,}105\,\exp\!\left(\frac{17{,}27\,T}{237{,}7+T}\right)\) es la presión de vapor en hPa, \(HR\) es la humedad relativa en porcentaje, \(v_2 = 0{,}75\,v_{10}\) es la velocidad del viento reducida a 2~m de altura en m/s y \(Q = \max\!\left(0;\ 0{,}1\,(G - 550)\right)\), con \(G\) igual a la radiación solar global en W/m\textsuperscript{2}.
+
+En consecuencia, la temperatura aparente de los datos observados se calcula con la misma expresión. Se utilizan la temperatura, la humedad y el viento provistos por el SMN, y la radiación de Open-Meteo para la misma estación y hora (ya que el SMN no informa datos de radiación ni nubosidad observados). Una formulación sin radiación produciría valores sistemáticamente inferiores en las horas de mayor insolación, y el modelo recibiría en producción una variable con una distribución distinta de la utilizada durante el entrenamiento.
 
 %----------------------------------------------------------------------------------------
-\subsection{Ingesta de demanda desde el SOTR}
+\subsection{Flujo de demanda eléctrica}
+\label{subsec:flujo_demanda}
+%----------------------------------------------------------------------------------------
+
+La demanda eléctrica constituye la variable objetivo de los modelos. Su flujo obtiene las mediciones del SOTR, calcula la demanda de cada región eléctrica con resolución de diez minutos y, a partir de ella, genera las series horarias depuradas y los valores diarios utilizados como objetivos de pronóstico.
+
+\subsubsection{Cálculo de la demanda regional}
 \label{subsec:ingesta_demanda_sotr}
-%----------------------------------------------------------------------------------------
 
-La demanda eléctrica se obtiene desde PI System mediante PIconnect. Debido a que esta fuente solo es accesible desde la red interna, la extracción se ejecuta en la infraestructura local. El proceso se implementó como un activo de Dagster que consulta valores interpolados con un paso de diez minutos, calcula la demanda por región eléctrica y escribe el resultado en el Data Warehouse de Fabric.
+La demanda eléctrica se obtiene desde PI System mediante PIconnect. Debido a que esta fuente solo es accesible desde la red interna, la extracción se ejecuta en la infraestructura local. El proceso se implementó como un activo de Dagster que consulta valores interpolados con un paso de diez minutos, calcula la demanda por región eléctrica y escribe el resultado en el warehouse de Fabric.
 
-El cálculo regional combina generación e intercambios medidos en el SOTR. Para la partición en regiones del SADI se utilizó la definición implementada por CAMMESA, que se presenta en la figura \ref{fig:regiones_electricas} y son las siguientes:
+El cálculo regional combina generación e intercambios medidos en el SOTR. Para la partición en regiones del SADI se utilizó la definición implementada por CAMMESA, que se presenta en la figura \ref{fig:regiones_electricas} y comprende las siguientes regiones:
 
 \begin{itemize}
 	\item GBA: Gran Buenos Aires.
@@ -53,7 +166,7 @@ El cálculo regional combina generación e intercambios medidos en el SOTR. Para
 	\item NEA: provincias de Corrientes, Misiones, Chaco y Formosa.
 	\item NOA: provincias de Salta, Jujuy, Catamarca, La Rioja, Tucumán y Santiago del Estero.
 	\item COM: provincias de Rio Negro, Neuquén y La Pampa.
-	\item PBA: provincia de Buenos Aires. Es importante mencionar que, para el pronóstico de demanda, esta región se divide en norte (PBN) y sur (PBS). Esto se debe a que presentan patrones de consumo distintos, en primer lugar por la variación de condiciones climáticas producto de la gran extensión territorial y, en segundo lugar, por la características de los usuarios (el norte está notablemente más industrializado que el sur).
+	\item PBA: provincia de Buenos Aires. Es importante mencionar que, para el pronóstico de demanda, esta región se divide en norte (PBN) y sur (PBS). Esto se debe a que presentan patrones de consumo distintos, en primer lugar por la variación de condiciones climáticas producto de la gran extensión territorial y, en segundo lugar, por las características de los usuarios (el norte está notablemente más industrializado que el sur).
 	\item PAT: provincias de Chubut, Santa Cruz y Tierra del Fuego.
 \end{itemize}
 
@@ -64,12 +177,12 @@ El cálculo regional combina generación e intercambios medidos en el SOTR. Para
 	\label{fig:regiones_electricas}
 \end{figure}
 
-El SOTR provee medidores de demanda por regiones, pero no son aptos para el pronóstico de demanda debido a que no incluyen las pérdidas que se producen en las líneas eléctricas que vinculas las regiones. Por este motivo, fue necesario desarrollar un algoritmo que obtenga los valores de generación e intercambios de cada región y, realizando la sumatoria correspondiente, calcule la demanda. Por otra parte, se hizo una repartición de las pérdidas entre corredores, asignando la mitad a cada una de las regiones asociadas al vínculo.
+El SOTR provee medidores de demanda por regiones, pero no son aptos para el pronóstico de demanda debido a que no incluyen las pérdidas que se producen en las líneas eléctricas que vinculan las regiones. Por este motivo, fue necesario desarrollar un algoritmo que obtenga los valores de generación e intercambios de cada región y, realizando la sumatoria correspondiente, calcule la demanda. Por otra parte, se hizo una repartición de las pérdidas entre corredores, asignando la mitad a cada una de las regiones asociadas al vínculo.
 
-Para expresarlo de forma matemático, sea \(G_r\) la generación de la región \(r\), \(\mathcal{N}_r\) el conjunto de
+En términos formales, sea \(G_r\) la generación de la región \(r\), \(\mathcal{N}_r\) el conjunto de
 regiones vinculadas y \(F_{r\rightarrow j}\) y \(F_{j\rightarrow r}\) las
 mediciones del intercambio en ambos extremos del corredor. La demanda regional
-se calcula haciendo:
+se calcula según la ecuación \ref{eq:demanda_regional}:
 
 \begin{equation}
 	D_r =
@@ -93,7 +206,7 @@ La figura \ref{fig:regiones_electricas_sotr}, tomada del SOTR, muestra el estado
 	\label{fig:regiones_electricas_sotr}
 \end{figure}
 
-Si utilizamos la fórmula anterior para calcular la demanda corregida por pérdidas para LIT, podemos hacer (el intercambio con Uruguay es igual en ambos extremos, ya que es un vinculo interno de la central Salto Grande):
+A modo de ejemplo, la demanda de LIT corregida por pérdidas para el instante de la figura se calcula según la ecuación \ref{eq:demanda_lit}. El intercambio con Uruguay es igual en ambos extremos, ya que corresponde a un vínculo interno de la central Salto Grande.
 
 \begin{equation}
 	\begin{aligned}
@@ -123,7 +236,7 @@ Resolviendo,
 	1511{,}5~\mathrm{MW}
 \end{equation}
 
-Notar que el valor obtenido de 1511,5 MW difiere de los 1482 MW de demanda sin considerar las pérdidas. En caso de no aplicar esta corrección, la demanda nacional agregada presentaría un error considerable introducido en los datos de entrenamiento de los modelos.
+El valor obtenido, de 1511,5~MW, difiere de los 1482~MW que resultan sin considerar las pérdidas. En caso de no aplicar esta corrección, la demanda nacional agregada presentaría un error considerable introducido en los datos de entrenamiento de los modelos.
 
 La implementación de esta corrección requirió definir todos los intercambios entre regiones y consultar una cantidad de medidores del SOTR sustancialmente mayor que si se hubiesen podido utilizar los medidores de demanda existentes.
 
@@ -135,10 +248,8 @@ La salida se persiste en la tabla \code{DEMANDA.DEMANDA\_REGIONES\_10M}. Su clav
 
 La tarea de Dagster que ejecuta este proceso está programada cada 20 minutos, con el objetivo de mantener la tabla lo suficientemente actualizada para cualquier otro uso.
 
-%----------------------------------------------------------------------------------------
-\subsection{Transformación de demanda de diez minutos a resolución horaria}
+\subsubsection{Resolución horaria y control de calidad}
 \label{subsec:demanda_10m_1h}
-%----------------------------------------------------------------------------------------
 
 La transformación horaria se implementó en un notebook de Fabric. El proceso lee la tabla de diez minutos, controla la disponibilidad de nuevos registros y procesa únicamente el intervalo necesario. Para admitir correcciones tardías en la fuente se vuelve a considerar el día anterior al último registro persistido. Si no existen horas nuevas completas, el notebook finaliza sin efectuar escrituras.
 
@@ -146,9 +257,7 @@ Una hora se considera completa cuando contiene los seis intervalos esperados de 
 
 La limpieza se realiza en dos etapas. Primero se identifican valores extremos por región mediante el rango intercuartílico. Los límites se establecen a partir del primer y tercer cuartil y un factor de tres veces el rango intercuartílico. Los valores que quedan fuera de esos límites se reemplazan temporalmente por valores nulos y se estiman mediante interpolación lineal en el eje temporal. En la figura \ref{fig:correccion_outliers} puede verse un caso de corrección de valores extremos.
 
-El método de eliminación de outliers es eficiente para fallas de medición, donde se alcanzan valores extremos por instantes cortos de tiempos. Las correcciones más desafiantes son aquellas que corresponden a fallas eléctricas reales del sistema eléctrico (por ejemplo, la desconexión intempestiva de una línea de transmisión que hace caer la demanda abruptamente). En estos casos, es deseable poder inferir el valor de demanda si no hubiese existido la falla, ya que, a los fines del entrenamiento de un modelo predictivo, esto representa un error que debe ser desestimado.
-
-Por este motivo, en la segunda etapa se detectan escalones abruptos dentro de un mismo día. Un cambio se considera candidato a corrección cuando supera simultáneamente un umbral relativo del 7\% y un umbral absoluto de 100~MW. Estos valores fueron determinados en base a la recomendación de los especialistas de CAMMESA en combinación con el análisis de amplios rangos temporales. La detección y corrección se ejecuta de manera iterativa, con un máximo de diez iteraciones. Los puntos identificados se interpolan y, cuando la interpolación no resulta posible en los extremos, se completan mediante propagación hacia adelante o hacia atrás. En la figura \ref{fig:correccion_saltos_bruscos} puede verse un caso de corrección de saltos bruscos.
+El método de eliminación de outliers es eficiente para fallas de medición, donde se alcanzan valores extremos durante intervalos breves. Las correcciones más desafiantes son aquellas que corresponden a fallas eléctricas reales del sistema eléctrico (por ejemplo, la desconexión intempestiva de una línea de transmisión que hace caer la demanda abruptamente). En estos casos, es deseable poder inferir el valor de demanda si no hubiese existido la falla, ya que, a los fines del entrenamiento de un modelo predictivo, esto representa un error que debe ser desestimado.
 
 \begin{figure}[H]
 	\centering
@@ -156,6 +265,8 @@ Por este motivo, en la segunda etapa se detectan escalones abruptos dentro de un
 	\caption{Corrección de valores extremos.}
 	\label{fig:correccion_outliers}
 \end{figure}
+
+Por este motivo, en la segunda etapa se detectan escalones abruptos dentro de un mismo día. Un cambio se considera candidato a corrección cuando supera simultáneamente un umbral relativo del 7\% y un umbral absoluto de 100~MW. Estos valores fueron determinados a partir de la recomendación de los especialistas de CAMMESA en combinación con el análisis de amplios rangos temporales. La detección y corrección se ejecuta de manera iterativa, con un máximo de diez iteraciones. Los puntos identificados se interpolan y, cuando la interpolación no resulta posible en los extremos, se completan mediante propagación hacia adelante o hacia atrás. En la figura \ref{fig:correccion_saltos_bruscos} puede verse un caso de corrección de saltos bruscos.
 
 \begin{figure}[H]
 	\centering
@@ -168,41 +279,118 @@ Después de la limpieza se calcula el promedio de los seis registros de cada hor
 
 Cada registro se vincula con la dimensión regional mediante la clave \code{RGE\_ID} y el período de vigencia correspondiente. La tabla final contiene \code{FECHA}, \code{HORA}, \code{RGE\_ID}, \code{VALOR}, \code{FLAG\_CORREGIDO} y \code{VALOR\_ORIGINAL}. Antes de persistir, se verifica la existencia de la clave compuesta en el destino para evitar duplicados. Los registros nuevos se incorporan en \code{DEMANDA.DEMANDA\_REGIONES\_1H}.
 
-A partir de la demanda horaria se obtienen variables diarias utilizadas como objetivos. La energía diaria se almacena por región en la tabla del esquema DEMANDA llamada \code{DEMANDA\_REGIONES\_DIARIA}. Las vistas del Warehouse suman los valores regionales para obtener la demanda del MEM y calculan las potencias máxima y mínima sobre los intervalos horarios definidos para cada variable. Esta derivación mantiene una fuente regional común para los objetivos nacionales y permite comprobar que el agregado del MEM sea consistente con sus componentes.
+A partir de la demanda horaria se obtienen variables diarias utilizadas como objetivos. La energía diaria se almacena por región en la tabla del esquema DEMANDA llamada \code{DEMANDA\_REGIONES\_DIARIA}. Las vistas del warehouse suman los valores regionales para obtener la demanda del MEM y calculan las potencias máxima y mínima sobre los intervalos horarios definidos para cada variable. Así, se mantiene una fuente regional común para los objetivos nacionales y permite comprobar que el agregado del MEM sea consistente con sus componentes.
 
 %----------------------------------------------------------------------------------------
-\subsection{Ingesta y procesamiento de datos meteorológicos reales}
+\subsection{Flujo de datos meteorológicos observados}
 \label{subsec:pipeline_meteorologico}
 %----------------------------------------------------------------------------------------
 
-El flujo meteorológico integra observaciones del Servicio Meteorológico Nacional y valores obtenidos de Open-Meteo. La primera etapa se ejecuta en el notebook \code{NB\_METEO\_L1}. Para el SMN se procesan los archivos de observaciones diarias y de datos horarios. Para Open-Meteo se realizan consultas por coordenadas asociadas con estaciones de referencia. El rango de fechas se recibe como parámetro y, cuando no se informa, el notebook utiliza el día anterior a la ejecución.
+El flujo de datos meteorológicos observados integra las mediciones de las estaciones del SMN con los valores de Open-Meteo para las mismas ubicaciones. Estas series se utilizan para construir las variables explicativas empleadas en el entrenamiento de los modelos.
 
-Los archivos descargados del SMN se conservan en un Lakehouse. Esta copia permite mantener el insumo original y volver a procesarlo si resulta necesario. Los datos interpretados se escriben en la base KQL \code{EH\_PSYD}, utilizada como capa~1. Allí se almacenan, entre otras variables, temperatura, humedad relativa, presión, dirección y velocidad del viento para la resolución horaria, y temperaturas máxima y mínima para la resolución diaria. Las tablas de Open-Meteo incorporan además temperatura aparente, nubosidad, precipitación y radiación solar, según la resolución de cada conjunto.
+\subsubsection{Ingesta en capa~1}
 
-La persistencia en KQL se realiza por lotes. Antes de insertar un período se eliminan los registros existentes para el mismo rango temporal. Esta estrategia permite repetir una ejecución sin conservar versiones duplicadas del mismo dato. Cuando el volumen serializado supera el tamaño previsto para una operación, la carga se divide en bloques. El resultado de esta etapa es una representación cercana a las fuentes, separada por proveedor y resolución.
+La primera etapa se ejecuta en el notebook \code{NB\_METEO\_L1}. Para el SMN se procesan los archivos de observaciones diarias y de datos horarios. Para Open-Meteo se realizan consultas por coordenadas asociadas con estaciones de referencia. El rango de fechas se recibe como parámetro y, cuando no se informa, el notebook utiliza el día anterior a la ejecución.
 
-La transferencia desde la capa~1 hacia la capa~2 se orquesta mediante el Pipeline \code{PPLN\_METEO}, que se presenta en la figura \ref{fig:pipeline_meteo}. El pipeline ejecuta el notebook y consulta en el Warehouse las estaciones cuya vigencia se superpone con el período procesado. Esta validación evita incorporar estaciones que no correspondan al intervalo analizado y permite asociar cada nombre de estación con su identificador \code{EMET\_ID}.
+Los archivos descargados del SMN se conservan en un lakehouse. Esta copia permite mantener el insumo original y volver a procesarlo si resulta necesario. Los datos interpretados se escriben en la base KQL \code{EH\_PSYD}, utilizada como capa~1. Allí se almacenan, entre otras variables, temperatura, humedad relativa, presión, dirección y velocidad del viento para la resolución horaria, y temperaturas máxima y mínima para la resolución diaria. Las tablas de Open-Meteo incorporan además temperatura aparente, nubosidad, precipitación y radiación solar, según la resolución de cada conjunto.
+
+La persistencia en KQL se realiza por lotes y, cuando el volumen serializado supera el tamaño previsto para una operación, la carga se divide en bloques. El resultado de esta etapa es una representación cercana a las fuentes, separada por proveedor y resolución.
+
+\subsubsection{Transformación a capa~2}
+
+La transferencia desde la capa~1 hacia la capa~2 se orquesta mediante el pipeline \code{PPLN\_METEO}, que se presenta en la figura \ref{fig:pipeline_meteo}. El pipeline ejecuta el notebook y consulta en el warehouse las estaciones cuya vigencia se superpone con el período procesado. Esta validación evita incorporar estaciones que no correspondan al intervalo analizado y permite asociar cada nombre de estación con su identificador \code{EMET\_ID}.
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{./Figures/pipeline_meteo.png}
-	\caption{Pipeline de Fabric para la orquestación de datos meteorológicos.}
+	\caption{Pipeline de Fabric para la orquestación de datos meteorológicos observados.}
 	\label{fig:pipeline_meteo}
 \end{figure}
 
-Para los datos horarios del SMN, la actividad de copia filtra el rango de fechas, conserva las estaciones vigentes y construye la marca temporal \code{FECHA\_HORA}. También ajusta la numeración horaria para compatibilizarla con la convención utilizada en CAMMESA. A partir de la temperatura, la humedad relativa y la velocidad del viento se calcula una temperatura aparente. Finalmente, las variables se redondean y tipifican antes de escribirlas en el esquema \code{METEO} del Warehouse.
+Para los datos horarios del SMN, la actividad de copia filtra el rango de fechas, conserva las estaciones vigentes y construye la marca temporal \code{FECHA\_HORA}. También ajusta la numeración horaria para compatibilizarla con la convención utilizada en CAMMESA. A partir de la temperatura, la humedad relativa y la velocidad del viento observadas, junto con la radiación de Open-Meteo, se calcula la temperatura aparente según la ecuación~\ref{eq:temp_aparente}. Finalmente, las variables se redondean y tipifican antes de escribirlas en el esquema \code{METEO} del warehouse.
 
 La escritura de los datos meteorológicos utiliza claves temporales y de estación. Para los valores horarios, la combinación de \code{FECHA\_HORA} y \code{EMET\_ID} identifica cada observación. Las tablas diarias emplean la fecha y el identificador de estación. Esta estructura permite comparar proveedores para una misma ubicación, seleccionar estaciones representativas de cada región eléctrica y construir agregados diarios sin perder el origen del dato.
 
-%%----------------------------------------------------------------------------------------
-%\subsection{Integración y disponibilidad para el modelado}
-%\label{subsec:integracion_modelado}
-%%----------------------------------------------------------------------------------------
-%
-%Una vez procesados ambos flujos, la demanda y la meteorología quedan disponibles en el Data Warehouse con claves temporales y geográficas explícitas. La dimensión de regiones vincula las series eléctricas con las estaciones meteorológicas mediante identificadores y períodos de vigencia. Esta relación es necesaria porque la disponibilidad de una estación y su representatividad regional pueden variar con el tiempo.
-%
-%La preparación de los conjuntos de modelado parte de las tablas horarias y diarias de capa~2. Para los modelos diarios se utilizan como variables objetivo la energía y las potencias mínima y máxima. Las variables explicativas se construyen a partir de la historia de la demanda, los registros meteorológicos y la información calendaria. La agregación se realiza después de los controles de calidad, de modo que un valor incompleto o anómalo no se propague sin identificación hacia los conjuntos de entrenamiento.
-%
-%La separación entre datos originales, datos corregidos y variables derivadas aporta trazabilidad al proceso. Los campos de control de la demanda regional permiten comprobar la conservación del balance nacional, mientras que \code{FLAG\_CORREGIDO} identifica las horas modificadas durante la limpieza. En meteorología, la conservación de los archivos originales del SMN y la capa inicial en KQL permiten revisar la transformación aplicada antes de la carga relacional.
-%
-%El pipeline implementado resuelve así la adquisición y preparación de las principales fuentes requeridas por el sistema de pronóstico. La automatización disminuye la dependencia de cargas manuales y establece una base común para comparar modelos bajo los mismos datos y reglas de procesamiento. Las etapas posteriores del capítulo describen la arquitectura de los modelos, el procedimiento de entrenamiento y su integración con los mecanismos de ejecución y seguimiento.
+%----------------------------------------------------------------------------------------
+\subsection{Flujo de pronósticos meteorológicos}
+\label{subsec:pipeline_pronosticos}
+%----------------------------------------------------------------------------------------
+
+Los pronósticos meteorológicos constituyen la información exógena disponible al momento de estimar la demanda futura. A diferencia de una observación, un valor pronosticado depende de la fecha en que fue emitido. Para un mismo día objetivo existen tantos valores como corridas lo incluyen, y su precisión disminuye a medida que aumenta la anticipación. Por este motivo, el flujo se diseñó para conservar cada corrida identificada por su fecha de cálculo (\code{FECHA\_CALCULO}) y por el modelo o servicio que la generó (\code{PRON\_ID}). Esta estructura permite evaluar los modelos de demanda con la información que efectivamente habría estado disponible en cada fecha y evita utilizar observaciones posteriores como si fueran pronósticos.
+
+\subsubsection{Fuentes e ingesta en capa~1}
+
+La tabla \ref{tab:fuentes_pronosticos} resume las fuentes incorporadas y el proceso que obtiene cada una.
+
+\begin{table}[H]
+	\centering
+	\caption{Fuentes de pronósticos meteorológicos incorporadas al pipeline.}
+	\label{tab:fuentes_pronosticos}
+	\footnotesize
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	
+	\begin{tabularx}{\textwidth}{
+			@{}
+			>{\raggedright\arraybackslash}X
+			>{\raggedright\arraybackslash}X
+			>{\raggedright\arraybackslash}X
+			>{\raggedright\arraybackslash}X
+			@{}
+		}
+		\toprule
+		
+		\textbf{Fuente} &
+		\textbf{Proceso de ingesta} &
+		\textbf{Resolución y horizonte} &
+		\textbf{Variables principales} \\ \\
+		
+		\midrule
+		
+		Open-Meteo (modelos IFS \cite{ecmwfIFS}, ICON \cite{zangl2015icon}, GFS \cite{noaaGFS} y UKMO \cite{walters2019ukmo}) &
+		Notebook en Fabric. &
+		Horaria, entre 15 y 16 días según el modelo. &
+		Temperatura, temperatura aparente, humedad, presión, viento, nubosidad, precipitación y radiación solar. \\ \\
+		
+		The Weather Channel &
+		Notebook en Fabric. &
+		Diaria, con partes día y noche, hasta 15 días. &
+		Temperaturas máxima y mínima, viento, humedad y descripción del estado del tiempo. \\ \\
+		
+		SMN &
+		Activo de Dagster en el servidor local. &
+		Diaria, con franjas de mañana y tarde, hasta 7 días. &
+		Temperaturas máxima y mínima, viento, humedad y descripción del estado del tiempo. \\ \\
+		
+		\bottomrule
+	\end{tabularx}
+\end{table}
+
+Para Open-Meteo se utilizó la API de corridas individuales (\textit{Single Runs}) \cite{openMeteoSingleRuns}, que devuelve el horizonte completo de una inicialización específica de cada modelo. Se adoptó la corrida de las 00 UTC (\textit{Coordinated Universal Time}), que se publica durante la madrugada en Argentina y queda disponible antes del cálculo diario. La API de pronósticos históricos (\textit{Historical Forecast}) de Open-Meteo \cite{openMeteoHistoricalForecast} no resulta adecuada para este fin porque entrega una combinación de distintas corridas, lo que no permite contar con la misma información que se utilizará en producción. 
+
+Los modelos, sus horizontes y sus períodos de vigencia se leen de una tabla del warehouse llamada \code{PRONOS.PRONOS\_TOTALES}, y las consultas se realizan por las coordenadas de las estaciones vigentes en cada fecha de cálculo. El notebook de Open-Meteo recibe un rango de fechas, procesa cada corrida de manera independiente y convierte las estampas de tiempo a hora local, con el mismo criterio aplicado a los datos observados.
+
+The Weather Channel (TWC) y el SMN solo publican el pronóstico vigente, por lo que su historia se construye a partir de la ejecución diaria. El SMN se consulta desde el servidor local mediante Dagster, por las restricciones de acceso descritas en el capítulo~\ref{Chapter2}. Los resultados de todas las fuentes se almacenan en la base KQL, en una tabla de capa~1 por fuente.
+
+\subsubsection{Reconstrucción de la historia de pronósticos}
+
+El período de tiempo establecido para el conjunto de datos de test se fijó desde el 01/09/2025 hasta el 31/08/2026, con el objetivo de poder evaluar el desempeño de los modelos en todas las estaciones del año. 
+
+Sin embargo, no todas las fuentes tienen este período disponible. Open-Meteo conserva las corridas del modelo IFS desde marzo de 2024 y las del resto de los modelos desde abril de 2026, mientras que el SMN y TWC no permiten recuperar pronósticos pasados. Para cubrir el período faltante se utilizaron archivos acumulados por un proceso previo de CAMMESA, con el que se completó la historia del SMN, TWC y el modelo ICON. Por lo tanto, para los modelos GFS y UKMO la fecha inicial quedó en abril de 2026. Los datos se cargaron en las tablas de capa~1 mediante un proceso implementado en un notebook de Fabric que los recuperó y acondicionó para almacenarlos con el mismo formato.
+
+Los archivos del proceso previo están organizados por región eléctrica y no por estación. Cada región se asoció con una estación meteorológica: para el SMN y TWC, a partir de la localidad consultada; para el modelo ICON, mediante la estación cuya serie de Open-Meteo presentó menor diferencia con la serie del archivo en los períodos que se contaba con ambos pronósticos.
+
+\subsubsection{Transformación a capa~2 y orquestación}
+
+La capa~2 de pronósticos se compone de dos tablas del esquema \code{PRONOS}. La tabla horaria \code{L2\_VALORES\_HORARIOS\_PRONOS} contiene los valores de Open-Meteo con la convención horaria utilizada en CAMMESA y la anticipación en días. La tabla diaria \code{L2\_VALORES\_DIARIOS\_PRONOS} integra las tres fuentes con las mismas variables que la tabla diaria de observaciones. Para Open-Meteo, los valores diarios se agregan a partir de los horarios con los criterios de los datos observados y solo se conservan los días con las 24 horas disponibles. Para TWC y el SMN, los valores informados por franjas se asignan a las horas de referencia más próximas: el día y la noche a las 15 y 21 horas, y la mañana y la tarde a las 8 y 15 horas. Esta asignación constituye una aproximación, dado que dichos valores representan un intervalo y no una hora puntual. Las variables que una fuente no provee quedan sin valor.
+
+La orquestación se implementó en el pipeline \code{PPLN\_PRONOS}, que se presenta en la figura \ref{fig:pipeline_pronos}. El pipeline recibe un período de fechas de cálculo y, en la ejecución diaria, procesa la fecha en curso. En primer lugar, ejecuta en paralelo los notebooks de Open-Meteo y TWC, junto con un notebook que verifica la carga del SMN realizada por Dagster. Esta validación espera hasta una hora a que estén disponibles todas las estaciones vigentes. Luego, cada tabla de capa~2 se actualiza mediante la eliminación del período a insertar (para evitar duplicación de datos) y una actividad de copia desde la base KQL (capa~1). Si el pronóstico del SMN no se completa, la tabla diaria se actualiza igualmente con las fuentes restantes y la ejecución finaliza con error para advertir el faltante. Como todas las cargas son idempotentes por fecha de cálculo, basta con repetir la ejecución para ese día una vez resuelto el problema.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{./Figures/pipeline_pronos.png}
+	\caption{Pipeline de Fabric para la orquestación de pronósticos meteorológicos.}
+	\label{fig:pipeline_pronos}
+\end{figure}
+
+De esta manera, el flujo deja disponibles los pronósticos de cuatro modelos numéricos y dos servicios meteorológicos con una estructura común y con definiciones de variables compatibles con las observaciones. Sobre esta base se construyen las variables exógenas de los modelos descritos en las secciones siguientes.
