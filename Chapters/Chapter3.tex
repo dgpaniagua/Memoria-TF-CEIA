@@ -78,7 +78,7 @@ La solución se implementó sobre la arquitectura híbrida presentada en el cap�
 			\node[capauno] (p3) at (\xp,\yc) {Base KQL\\una tabla por fuente};
 			\node[proceso] (p4) at (\xp,\yd) {Pipeline\\validación del SMN y agregación diaria};
 			\node[capados] (p5) at (\xp,\ye) {Esquema PRONOS\\series horarias y diarias};
-			\node[consumo] (p6) at (\xp,\yf) {Vistas\\por estación y región};
+			\node[consumo] (p6) at (\xp,\yf) {Vistas\\por región};
 			
 			% Modelado
 			\node[consumo, text width=13.6cm, minimum height=0.9cm] (mod) at (\xm,\yg)
@@ -118,7 +118,7 @@ La solución se implementó sobre la arquitectura híbrida presentada en el cap�
 	\label{fig:diagrama_pipeline}
 \end{figure}
 
-La persistencia se organizó en tres capas. La capa~1 conserva una representación cercana a la fuente, sin transformaciones irreversibles. La capa~2 contiene datos validados, tipificados e integrados con las dimensiones del warehouse, como las estaciones meteorológicas y las regiones eléctricas. La capa~3 está formada por vistas orientadas al consumo analítico y al modelado, como los agregados del MEM o los valores meteorológicos por región. La demanda constituye una excepción: al provenir de un proceso local, su capa~1 se escribe directamente en el warehouse. Esta separación permite repetir las transformaciones cuando se modifican las reglas de procesamiento, sin volver a consultar las fuentes.
+La persistencia se organizó en tres capas. La capa~1 conserva una representación cercana a la fuente, sin transformaciones irreversibles. La capa~2 contiene datos validados, tipificados e integrados con las dimensiones del warehouse, como las estaciones meteorológicas y las regiones eléctricas. La capa~3 está formada por vistas orientadas al consumo analítico y al modelado, como los agregados del MEM o los valores meteorológicos por región. La demanda constituye una excepción: al provenir de un proceso local, su capa~1 se escribe directamente en el warehouse. Esta separación permite repetir las transformaciones cuando se modifican las reglas de procesamiento, sin volver a consultar las fuentes. El apéndice~\ref{AppendixA} describe las tablas y vistas de cada esquema.
 
 Sobre esta arquitectura se aplicaron los siguientes criterios, comunes a los tres flujos:
 
@@ -298,7 +298,7 @@ Después de la limpieza se calcula el promedio de los seis registros de cada hor
 
 Cada registro se vincula con la dimensión regional mediante la clave \code{RGE\_ID} y el período de vigencia correspondiente. La tabla final contiene \code{FECHA}, \code{HORA}, \code{RGE\_ID}, \code{VALOR}, \code{FLAG\_CORREGIDO} y \code{VALOR\_ORIGINAL}. Antes de persistir, se verifica la existencia de la clave compuesta en el destino para evitar duplicados. Los registros nuevos se incorporan en \code{DEMANDA.DEMANDA\_REGIONES\_1H}.
 
-A partir de la demanda horaria se obtienen variables diarias utilizadas como objetivos. La energía diaria se almacena por región en la tabla del esquema DEMANDA llamada \code{DEMANDA\_REGIONES\_DIARIA}. Las vistas del warehouse suman los valores regionales para obtener la demanda del MEM y calculan las potencias máxima y mínima sobre los intervalos horarios definidos para cada variable. Así, se mantiene una fuente regional común para los objetivos nacionales y permite comprobar que el agregado del MEM sea consistente con sus componentes.
+A partir de la demanda horaria se obtienen las variables diarias utilizadas como objetivos. La vista \code{DEMANDA.DEMANDAS\_MEM} suma los valores regionales de cada hora para obtener la demanda del MEM y, a partir de ella, calcula la energía diaria y las potencias máxima y mínima sobre los intervalos horarios definidos para cada variable. De este modo, los objetivos nacionales se derivan de una fuente regional común y puede comprobarse que el agregado del MEM sea consistente con sus componentes.
 
 %----------------------------------------------------------------------------------------
 \subsection{Flujo de datos meteorológicos observados}
