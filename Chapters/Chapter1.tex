@@ -81,11 +81,11 @@ Como antecedente latinoamericano de alcance nacional, Leme et al. \cite{leme2020
 
 La experiencia operativa de CAMMESA constituye otro antecedente directo del trabajo. Antes de su realización, el área de Programación Semanal y Diaria utilizaba modelos SARIMAX, XGBoost y LSTM para estimar la demanda agregada del SADI. Las evaluaciones internas mostraban valores de MAPE comprendidos aproximadamente entre 3\% para el día siguiente y 10\% para los horizontes más alejados, con diferencias según el modelo y las condiciones analizadas. Estos resultados no proceden de una publicación académica y, por lo tanto, no son directamente comparables con los trabajos citados. No obstante, documentan el desempeño de los métodos en el entorno de aplicación y muestran tanto el aumento del error con el horizonte como la necesidad de incorporar variables meteorológicas y calendarias identificadas por los especialistas.
 
-Los métodos basados en árboles, como XGBoost, representan una referencia adecuada para este problema porque permiten modelar relaciones no lineales e incorporar variables exógenas con un costo computacional moderado. Sin embargo, requieren construir explícitamente atributos que describan la historia y la estacionalidad de la serie. En este trabajo, XGBoost se utilizó como línea de base para determinar si enfoques más recientes mejoraban el pronóstico bajo un mismo procedimiento de validación.
+Los métodos basados en árboles de decisión, como XGBoost y LightGBM, representan una referencia adecuada para este problema porque permiten modelar relaciones no lineales e incorporar variables exógenas con un costo computacional moderado. Sin embargo, requieren construir explícitamente atributos que describan la historia y la estacionalidad de la serie. En este trabajo, un modelo basado en árboles se utilizó como línea de base para determinar si enfoques más recientes mejoraban el pronóstico bajo un mismo procedimiento de validación.
 
-La investigación reciente avanzó hacia arquitecturas neuronales diseñadas para generar horizontes de múltiples pasos y representar patrones en distintas escalas. Oreshkin et al. \cite{oreshkin2021nbeatsload} aplicaron N-BEATS al pronóstico de demanda eléctrica de mediano plazo sobre 35 series nacionales europeas y obtuvieron mejoras frente a métodos estadísticos, de aprendizaje automático e híbridos. El resultado aporta evidencia específica sobre la utilidad de las arquitecturas residuales para modelar tendencias, estacionalidades y fluctuaciones de la demanda, aunque trabaja con series mensuales y un horizonte diferente del considerado en este trabajo. 
+La investigación reciente avanzó hacia arquitecturas neuronales diseñadas para generar pronósticos de múltiples pasos e incorporar covariables conocidas a futuro, como la información calendaria o los pronósticos meteorológicos. Lim et al. \cite{lim2021tft} propusieron el Temporal Fusion Transformer (TFT), que combina capas recurrentes con mecanismos de atención y de selección de variables, y lo evaluaron, entre otros conjuntos, sobre series de consumo eléctrico. Su diseño permite distinguir la información histórica, la conocida a futuro y la estática, y estimar la relevancia de cada variable en el pronóstico.
 
-Otras arquitecturas, entre ellas N-HiTS y modelos basados en Transformers como PatchTST, extienden esta línea mediante mecanismos de procesamiento multiescala y segmentación temporal \cite{challu2023nhits,nie2023patchtst}. Su interés para el problema radica en la capacidad de producir pronósticos directos de varios pasos y aprovechar ventanas históricas extensas, pero su desempeño debe comprobarse con datos meteorológicos y regionales del sistema analizado.
+En paralelo, otras arquitecturas, como TiDE y TSMixer, mostraron que modelos basados en perceptrones multicapa pueden alcanzar un desempeño competitivo frente a los basados en Transformers, con un costo de entrenamiento menor \cite{das2023tide,chen2023tsmixer}. Su interés para el problema radica en la capacidad de producir pronósticos directos de varios pasos con covariables exógenas, pero su desempeño debe comprobarse con datos meteorológicos y regionales del sistema analizado.
 
 Los modelos fundacionales constituyen una tendencia aún más reciente. Se preentrenan sobre grandes colecciones de series y pueden aplicarse a datos nuevos sin entrenamiento específico o con un ajuste limitado. Meyer et al. \cite{meyer2025foundationload} compararon modelos fundacionales, entre ellos Chronos y TimesFM, con Transformers entrenados desde cero para pronosticar demanda eléctrica residencial de corto plazo. Los resultados indicaron desempeños comparables y, en algunos casos, superiores, con menor necesidad de entrenamiento específico. Este antecedente respalda su evaluación en el dominio eléctrico, aunque su escala residencial difiere de la demanda de un sistema nacional y no resuelve por sí mismo la incorporación de variables exógenas ni la desagregación regional.
 
@@ -136,10 +136,10 @@ La tabla \ref{tab:estado_arte} resume los antecedentes de mayor relación con el
 		Demanda del sistema interconectado brasileño. &
 		Comparación de métodos sobre datos de alcance nacional. \\ \\
 		
-		Oreshkin et al. \cite{oreshkin2021nbeatsload} &
-		N-BEATS &
-		Demanda mensual de 35 países europeos. &
-		Mejora de la precisión y del sesgo frente a diez métodos. \\ \\
+		Lim et al. \cite{lim2021tft} &
+		Temporal Fusion Transformer &
+		Series de consumo eléctrico y de otros dominios, con covariables conocidas a futuro. &
+		Pronóstico de múltiples pasos con estimación de la relevancia de las variables. \\ \\
 		
 		Meyer et al. \cite{meyer2025foundationload} &
 		Modelos fundacionales y Transformers &
@@ -162,7 +162,7 @@ Para alcanzar este propósito, se definieron los siguientes objetivos específic
 	
 	\item Integrar y procesar los datos históricos de demanda, las variables meteorológicas y la información calendaria necesarias para generar los pronósticos del SADI y de sus regiones eléctricas.
 	
-	\item Implementar y comparar modelos de aprendizaje automático, arquitecturas neuronales modernas y modelos preentrenados para series temporales, utilizando un modelo XGBoost como referencia.
+	\item Implementar y comparar modelos de aprendizaje automático, arquitecturas neuronales modernas y modelos preentrenados para series temporales, utilizando como referencia un modelo basado en árboles de decisión.
 	
 	\item Evaluar la capacidad de los modelos para pronosticar la energía diaria y las potencias mínima y máxima en cada uno de los 14 días del horizonte.
 	
