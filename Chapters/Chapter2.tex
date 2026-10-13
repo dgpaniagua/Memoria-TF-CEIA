@@ -2,51 +2,31 @@
 
 \label{Chapter2}
 
-En este capítulo se presentan las tecnologías, bibliotecas, fuentes de datos e infraestructura de cómputo utilizadas como soporte del trabajo. El propósito es describir los componentes de terceros y el entorno tecnológico utilizados.
+En este capítulo se presentan las tecnologías, fuentes de datos, modelos e infraestructura de cómputo de terceros sobre los que se construyó la solución. La forma en que cada componente se configuró y se utilizó en este trabajo se desarrolla en el capítulo~\ref{Chapter3}.
 
 %----------------------------------------------------------------------------------------
 \section{Frameworks para procesamiento y modelado}
 \label{sec:frameworks_bibliotecas}
 %----------------------------------------------------------------------------------------
 
-La solución se apoyó principalmente en Microsoft Fabric, plataforma adoptada por CAMMESA para el almacenamiento, procesamiento y análisis de datos. Aquellas actividades que requerían acceso directo a sistemas internos o ejecución desde la red local se alojaron en una instalación de Dagster ejecutada en infraestructura propia de la empresa.
+La solución se apoyó principalmente en Microsoft Fabric, plataforma adoptada por CAMMESA para el almacenamiento, procesamiento y análisis de datos. Las actividades que requerían acceso a sistemas internos se alojaron en Dagster, un orquestador basado en activos que representa tablas y archivos como elementos con dependencias explícitas e historial de ejecuciones \cite{dagsterOverview,dagsterAssets}, ejecutado en un servidor de la empresa.
 
-El lenguaje principal utilizado fue Python, debido a su amplia adopción en ciencia de datos y a la disponibilidad de bibliotecas para aprendizaje automático, series temporales y acceso a fuentes heterogéneas. Su utilización permitió mantener una base tecnológica común entre los notebooks ejecutados en Fabric y los procesos alojados en el servidor local.
+El lenguaje principal fue Python, por su amplia adopción en ciencia de datos y la disponibilidad de bibliotecas para series temporales y acceso a fuentes heterogéneas. La preparación de datos se realizó con pandas y NumPy y, cuando el volumen o la integración con Fabric lo requirieron, con PySpark, que permite el procesamiento distribuido en los notebooks de la plataforma \cite{microsoftFabricNotebooks}. Las series del sistema de tiempo real se leyeron con PIconnect, conector de Python para PI System \cite{piconnectDocs}.
 
-Para la preparación y análisis de datos se utilizó principalmente la biblioteca pandas, que proporciona estructuras tabulares y operaciones para selección, agrupamiento y transformación de datos. Esta herramienta resulta apropiada para el tratamiento de series temporales de demanda y meteorología, especialmente en las etapas que pueden resolverse en memoria sobre un único nodo.
+Los modelos se implementaron con Darts \cite{herzen2022darts}, una biblioteca de series temporales que ofrece una interfaz común para entrenar y predecir con algoritmos clásicos y redes neuronales basadas en PyTorch. Darts admite el entrenamiento sobre múltiples series y covariables pasadas, futuras y estáticas, y resuelve la construcción de las ventanas de entrada y salida. Este enfoque permite evaluar familias de modelos distintas con un mismo procedimiento y reduce las diferencias de implementación que podrían afectar la comparación.
 
-Cuando el volumen de datos o la integración con los servicios de Fabric lo requirieron, se empleó PySpark. Los notebooks de Fabric admiten procesamiento distribuido mediante Apache Spark y permiten combinar DataFrames de Spark con pandas. Esta alternativa proporciona escalabilidad para el tratamiento de datos históricos con resolución horaria o inferior, sin abandonar el ecosistema Python utilizado en el resto de la solución \cite{microsoftFabricNotebooks}.
-
-Para los modelos de referencia se utilizaron regresiones lineales y algoritmos basados en árboles de decisión: Random Forest, XGBoost y LightGBM. Las regresiones lineales ofrecen una línea de base simple e interpretable, útil para verificar que modelos más complejos aporten una mejora real. Los algoritmos basados en árboles, por su parte, permiten representar relaciones no lineales e interacciones entre variables históricas, meteorológicas y calendarias. La interfaz compatible con scikit-learn facilita la preparación de experimentos y el cálculo homogéneo de métricas.
-
-Los modelos neuronales abarcan redes recurrentes, como LSTM y GRU, y arquitecturas más recientes diseñadas para el pronóstico de múltiples pasos. Tanto estos modelos como los de referencia se implementaron con Darts, una biblioteca especializada en series temporales que integra algoritmos clásicos y redes neuronales entrenadas con PyTorch \cite{herzen2022darts}. Este enfoque permite evaluar familias de modelos con una interfaz común y reducir diferencias de implementación que podrían afectar la comparación.
-
-El seguimiento de experimentos y modelos se apoyó en MLflow, integrado en las capacidades de ciencia de datos de Fabric. MLflow permite registrar parámetros, métricas y artefactos asociados con cada ejecución, además de conservar versiones de los modelos. Su elección respondió a la necesidad de comparar alternativas de manera reproducible y mantener trazabilidad entre los datos utilizados, la configuración de entrenamiento y los resultados obtenidos. Fabric incorpora esta herramienta dentro de sus notebooks y experiencias de ciencia de datos \cite{microsoftFabricMLflow}.
-
-En el entorno local se utilizó Dagster como orquestador de datos. Su modelo basado en activos permite representar tablas, archivos y otros productos persistentes como elementos con dependencias explícitas, historial de ejecuciones y políticas de actualización \cite{dagsterOverview,dagsterAssets}. Esta característica resulta adecuada para los procesos que obtienen información desde sistemas internos y posteriormente la escriben en Fabric. NumPy y pandas se utilizaron también en este entorno, junto con bibliotecas de Azure para autenticación y acceso a servicios en la nube.
-
-Para la lectura de series operativas se utilizó PIconnect, conector de Python para PI System y PI Asset Framework. La biblioteca permite consultar valores registrados o interpolados mediante el SDK de PI, por lo que posibilita acceder desde el servidor local a la información histórica del Sistema Operativo en Tiempo Real (SOTR) de CAMMESA \cite{piconnectDocs}. 
-
-Finalmente, Power BI se empleó como herramienta de visualización, tanto para los pronósticos como para las métricas de desempeño. Su integración con Fabric permite construir informes sobre los datos centralizados sin incorporar una capa adicional de exportación.
+La búsqueda de hiperparámetros se realizó con Optuna \cite{akiba2019optuna}. Su muestreador por defecto, TPE (\textit{Tree-structured Parzen Estimator}) \cite{bergstra2011tpe}, construye a partir de las pruebas anteriores un modelo probabilístico de las regiones del espacio con mejores resultados y propone las combinaciones siguientes en función de él, por lo que requiere menos evaluaciones que una búsqueda en grilla. El registro de experimentos y de versiones de modelos se apoyó en MLflow, integrado en Fabric \cite{microsoftFabricMLflow}, y la visualización de pronósticos y métricas, en Power BI.
 
 %----------------------------------------------------------------------------------------
 \section{Fuentes de datos para el pronóstico de demanda}
 \label{sec:datasets}
 %----------------------------------------------------------------------------------------
 
-Los conjuntos de datos utilizados fueron construidos a partir de fuentes internas de CAMMESA y servicios meteorológicos externos. No se trató, por lo tanto, de un dataset público para aprendizaje automático, sino de información operativa que debió integrarse con distintas resoluciones, coberturas geográficas y condiciones de acceso.
+Los datos no provienen de un conjunto público para aprendizaje automático, sino de información operativa de CAMMESA y de servicios meteorológicos externos, que debió integrarse con distintas resoluciones, coberturas y condiciones de acceso. La tabla~\ref{tab:fuentes_datos} resume las fuentes utilizadas.
 
-La variable principal provino de registros de demanda eléctrica del sistema SOTR, almacenados en PI System. Las series poseen una resolución original de diez minutos y representan la demanda del SADI y de sus regiones eléctricas. A partir de estas series se obtienen las variables diarias que actúan como objetivos de pronóstico: energía y potencias mínima y máxima.
+La variable principal proviene de los registros de demanda del Sistema Operativo en Tiempo Real (SOTR), almacenados en PI System con una resolución de diez minutos. A partir de ellos se obtienen las variables objetivo: la energía y las potencias pico y mínima diarias del SADI y de sus regiones. La información calendaria incluye el día de la semana, los feriados y otras clasificaciones utilizadas por los especialistas.
 
-También se incorporó información calendaria, como día de la semana, feriados y otras clasificaciones utilizadas habitualmente por los especialistas. Estas variables permiten representar modificaciones del consumo asociadas con la actividad residencial, comercial e industrial.
-
-La información meteorológica se obtuvo de tres fuentes. La primera correspondió al Servicio Meteorológico Nacional (SMN), cuyos datos se consideraron prioritarios por su carácter oficial. Se utilizaron archivos de observaciones diarias y datos horarios publicados en formato de texto \cite{datosabiertosSMN}. Debido a restricciones de acceso desde direcciones IP externas al país, las descargas automáticas se realizan desde el servidor local y los archivos se almacenan en un Lakehouse de Fabric para su posterior lectura. Los registros incluyen, entre otras variables, temperatura, humedad relativa, presión y viento. La desventaja que presentan los datos de pronóstico del SMN es que su horizonte máximo es de siete días, incluyendo el día en curso.
-
-La segunda fuente fue Open-Meteo, utilizada para obtener datos históricos y pronósticos meteorológicos mediante interfaces de programación (API). Tiene múltiples variables disponibles, como temperatura, humedad, presión, viento, nubosidad, precipitación, radiación solar y temperatura aparente con resolución horaria o agregación diaria. La posibilidad de consultas por coordenadas facilita asociar las variables con puntos representativos de las regiones eléctricas. Para los pronósticos se seleccionaron algunos de los modelos disponibles, según el horizonte de cálculo y disponibilidad geográfica \cite{openMeteoHistorical,openMeteoForecast}.
-
-La tercera fuente de pronósticos corresponde a The Weather Channel \cite{weatherWeb}. Su inclusión permite disponer de una referencia meteorológica adicional, que además es habitualmente consultada por el área de Programación Semanal y Diaria de CAMMESA. Esta fuente presenta un horizonte máximo de pronóstico de 15 días, que se ajusta al requerimiento para predicción de demanda.
-
-La tabla \ref{tab:fuentes_datos} resume las fuentes consideradas.
+La información meteorológica proviene de tres fuentes. El Servicio Meteorológico Nacional (SMN) publica observaciones y pronósticos en archivos de texto \cite{datosabiertosSMN}. Sus datos son prioritarios por su carácter oficial, pero sus pronósticos alcanzan solo siete días. Open-Meteo ofrece, mediante una API consultada por coordenadas, datos históricos y pronósticos de distintos modelos numéricos, con variables como temperatura, temperatura aparente, humedad, viento, nubosidad y radiación solar \cite{openMeteoHistorical,openMeteoForecast}. The Weather Channel \cite{weatherWeb}, consultado habitualmente por el área de Programación Semanal y Diaria, provee pronósticos con un horizonte de 15 días.
 
 \begin{table}[H]
 	\centering
@@ -55,82 +35,112 @@ La tabla \ref{tab:fuentes_datos} resume las fuentes consideradas.
 	\footnotesize
 	\setlength{\tabcolsep}{4pt}
 	\renewcommand{\arraystretch}{1.15}
-	
 	\begin{tabularx}{\textwidth}{
 			@{}
-			>{\raggedright\arraybackslash}X
-			>{\raggedright\arraybackslash}X
-			>{\raggedright\arraybackslash}X
-			>{\raggedright\arraybackslash}X
+			>{\raggedright\arraybackslash\hsize=0.8\hsize}X
+			>{\raggedright\arraybackslash\hsize=1.1\hsize}X
+			>{\raggedright\arraybackslash\hsize=1.1\hsize}X
+			>{\raggedright\arraybackslash\hsize=1.0\hsize}X
 			@{}
 		}
 		\toprule
-		
-		\textbf{Fuente} &
-		\textbf{Contenido principal} &
-		\textbf{Resolución y cobertura} &
-		\textbf{Condición de uso} \\
-		
+		\textbf{Fuente} & \textbf{Contenido principal} & \textbf{Resolución y cobertura} & \textbf{Condición de uso} \\
 		\midrule
-		
-		SOTR PI System &
-		Demanda eléctrica del SADI y sus regiones. &
-		Series de diez minutos, con cobertura nacional y regional. &
-		Datos internos de CAMMESA. \\ \\
-		
-		Calendarios operativos &
-		Días hábiles, fines de semana, feriados y clasificaciones especiales. &
-		Información con resolución diaria. &
-		Información propia y de fuentes oficiales. \\ \\
-		
-		SMN &
-		Observaciones y pronósticos meteorológicos. &
-		Datos horarios y diarios de estaciones argentinas. &
-		Datos abiertos oficiales con atribución. \\ \\
-		
-		Open-Meteo &
-		Observaciones y pronósticos meteorológicos. &
-		Datos horarios y diarios consultados por coordenadas geográficas. &
-		Datos sujetos a las condiciones de uso de la API. \\ \\
-		
-		The Weather Channel &
-		Pronósticos meteorológicos. &
-		Datos horarios y diarios para ubicaciones seleccionadas. &
-		Servicio de terceros para uso institucional. \\ \\
-		
+		SOTR (PI System) & Demanda eléctrica del SADI y sus regiones. & Diez minutos; nacional y regional. & Datos internos de CAMMESA. \\
+		Calendarios operativos & Días hábiles, feriados y clasificaciones especiales. & Diaria. & Información propia y de fuentes oficiales. \\
+		SMN & Observaciones y pronósticos meteorológicos. & Horaria y diaria; estaciones argentinas. & Datos abiertos con atribución. \\
+		Open-Meteo & Observaciones y pronósticos meteorológicos. & Horaria; por coordenadas geográficas. & Condiciones de uso de la API. \\
+		The Weather Channel & Pronósticos meteorológicos. & Horaria y diaria; ubicaciones seleccionadas. & Servicio de terceros. \\
 		\bottomrule
 	\end{tabularx}
 \end{table}
 
-
 %----------------------------------------------------------------------------------------
-\section{Modelos fundacionales para series temporales}
+\section{Modelos de pronóstico}
+\label{sec:modelos_pronostico}
+%----------------------------------------------------------------------------------------
+
+Los modelos evaluados estiman los valores futuros de la variable objetivo a partir de su historia y de covariables. Las covariables pueden ser pasadas, cuando solo se conocen hasta el momento del pronóstico; futuras, cuando se conocen de antemano, como el calendario o un pronóstico meteorológico; o estáticas, cuando describen una característica constante de la serie, como su región. Para cubrir un horizonte de varios días, un modelo puede seguir una estrategia recursiva, en la que predice un día por vez y utiliza cada predicción como entrada del siguiente, o una estrategia directa, en la que genera todo el horizonte en un único paso. Además, un modelo es local cuando se entrena con una única serie, y global cuando aprende de varias a la vez, lo que le permite disponer de más ejemplos y compartir patrones comunes \cite{monteromanso2021global}. La tabla~\ref{tab:modelos_familias} resume los modelos utilizados.
+
+\begin{table}[H]
+	\centering
+	\caption{Modelos de pronóstico evaluados.}
+	\label{tab:modelos_familias}
+	\footnotesize
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	\begin{tabularx}{\textwidth}{
+			@{}
+			>{\raggedright\arraybackslash\hsize=0.7\hsize}X
+			>{\raggedright\arraybackslash\hsize=0.8\hsize}X
+			>{\raggedright\arraybackslash\hsize=1.7\hsize}X
+			>{\raggedright\arraybackslash\hsize=0.8\hsize}X
+			@{}
+		}
+		\toprule
+		\textbf{Modelo} & \textbf{Familia} & \textbf{Mecanismo principal} & \textbf{Covariables en Darts} \\
+		\midrule
+		Regresión lineal & Aprendizaje automático & Combinación lineal de las variables explicativas. & Futuras y pasadas. \\
+		Random Forest \cite{breiman2001randomforest} & Aprendizaje automático & Promedio de árboles entrenados sobre muestras aleatorias. & Futuras y pasadas. \\
+		XGBoost \cite{chen2016xgboost} & Aprendizaje automático & \textit{Gradient boosting} con regularización de los árboles. & Futuras y pasadas. \\
+		LightGBM \cite{ke2017lightgbm} & Aprendizaje automático & \textit{Gradient boosting} con histogramas y crecimiento por hojas. & Futuras y pasadas. \\
+		LSTM \cite{hochreiter1997lstm} & Red recurrente & Celda de memoria con compuertas de entrada, olvido y salida. & Futuras. \\
+		GRU \cite{cho2014gru} & Red recurrente & Compuertas de actualización y de reinicio. & Futuras. \\
+		TFT \cite{lim2021tft} & Múltiples pasos & Selección de variables, codificador recurrente y atención multicabezal. & Estáticas, pasadas y futuras. \\
+		TiDE \cite{das2023tide} & Múltiples pasos & Codificador y decodificador con bloques residuales densos. & Estáticas, pasadas y futuras. \\
+		TSMixer \cite{chen2023tsmixer} & Múltiples pasos & Perceptrones que mezclan las dimensiones temporal y de variables. & Estáticas, pasadas y futuras. \\
+		Chronos-2 \cite{ansari2025chronos2} & Fundacional & Transformer preentrenado con atención grupal entre la serie y sus covariables. & Pasadas y futuras. \\
+		\bottomrule
+	\end{tabularx}
+\end{table}
+
+\subsection{Algoritmos de aprendizaje automático}
+\label{subsec:modelos_ml}
+
+La regresión lineal es interpretable y robusta, pero solo representa relaciones no lineales, como la respuesta de la demanda a la temperatura, si se incorporan mediante transformaciones de las variables. Los demás algoritmos combinan árboles de decisión. Random Forest promedia árboles entrenados sobre muestras aleatorias para reducir la varianza, mientras que el \textit{gradient boosting} \cite{friedman2001gbm} agrega árboles en forma secuencial, de modo que cada uno corrige los errores de los anteriores. XGBoost y LightGBM son implementaciones eficientes de este esquema. Sus principales hiperparámetros son la cantidad de árboles, la tasa de aprendizaje, la cantidad de hojas, el mínimo de observaciones por hoja, las fracciones de observaciones y de variables de cada árbol, y la regularización. Los modelos basados en árboles representan relaciones no lineales sin transformaciones previas, pero no extrapolan fuera del rango observado en el entrenamiento y requieren que la historia se presente como rezagos explícitos.
+
+\subsection{Redes neuronales}
+\label{subsec:modelos_rnn}
+\label{subsec:modelos_multipaso}
+
+Las redes recurrentes procesan una secuencia de a un paso por vez y mantienen un estado interno que resume los pasos anteriores. LSTM \cite{hochreiter1997lstm} incorpora una celda de memoria regulada por compuertas, que facilita el aprendizaje de dependencias largas, y GRU \cite{cho2014gru} simplifica ese mecanismo con menos parámetros. En el pronóstico se utilizan habitualmente de forma recursiva.
+
+Las arquitecturas de múltiples pasos pronostican el horizonte completo con covariables. TFT \cite{lim2021tft} combina la selección de variables, un codificador recurrente y atención multicabezal. TiDE \cite{das2023tide} y TSMixer \cite{chen2023tsmixer}, basadas solo en perceptrones multicapa, alcanzan resultados comparables con un costo computacional menor. Otras arquitecturas difundidas, como N-BEATS \cite{oreshkin2020nbeats} y N-HiTS \cite{challu2023nhits}, no se consideraron porque en Darts solo admiten covariables pasadas, y en este problema el calendario y el pronóstico meteorológico de los días pronosticados son determinantes.
+
+\subsection{Modelos fundacionales}
 \label{sec:modelos_preentrenados}
-%----------------------------------------------------------------------------------------
 
-Además de los modelos entrenados específicamente con datos del SADI, se consideró la incorporación de modelos fundacionales para series temporales. Estos modelos se preentrenan sobre colecciones amplias y heterogéneas de series, con el objetivo de aprender patrones generales de tendencia, estacionalidad y dependencia temporal. Luego pueden aplicarse a nuevas series sin reentrenamiento, modalidad conocida como zero-shot, o adaptarse mediante procedimientos de ajuste.
+Los modelos fundacionales se preentrenan sobre colecciones amplias de series para aprender patrones generales de tendencia, estacionalidad y dependencia temporal, y pueden aplicarse a series nuevas sin entrenamiento (\textit{zero-shot}) o adaptarse mediante un ajuste. Se utilizó Chronos-2 \cite{ansari2025chronos2}, sucesor de Chronos \cite{ansari2024chronos}. Es un modelo de 120 millones de parámetros, preentrenado con series reales y sintéticas, cuya atención grupal procesa en forma conjunta la serie objetivo y sus covariables pasadas y futuras. Sus pesos no fueron generados como parte del trabajo.
 
-Se utilizó Chronos-2, la versión más reciente de la familia Chronos. La primera versión representa los valores de una serie mediante una discretización que permite emplear arquitecturas derivadas de modelos de lenguaje para producir distribuciones de pronóstico \cite{ansari2024chronos}. Chronos-2, en cambio, incorpora un mecanismo de atención grupal que procesa en forma conjunta la serie objetivo y sus covariables pasadas y futuras, y fue preentrenado sobre grandes volúmenes de series reales y sintéticas \cite{ansari2025chronos2}. Se trata de un modelo desarrollado por terceros, cuyos pesos preentrenados no fueron generados como parte del trabajo.
+Para el ajuste se utilizó LoRA (\textit{Low-Rank Adaptation}) \cite{hu2022lora}, que mantiene fijos los pesos preentrenados y entrena solo matrices de bajo rango agregadas a algunas capas, lo que reduce los parámetros ajustados y conserva el conocimiento del preentrenamiento. Estos modelos permiten obtener una referencia sin entrenar una red desde cero. Sin embargo, sus datos de preentrenamiento pueden no representar las particularidades del consumo argentino, por lo que se evaluaron como una familia adicional y no como sustitutos de los modelos supervisados.
 
-La principal ventaja de estos modelos es que permiten obtener una referencia sin entrenar una red desde cero para cada variable o región. Esto resulta especialmente útil para comprobar si el conocimiento adquirido durante el preentrenamiento se transfiere a series de demanda eléctrica del SADI. Sin embargo, su utilización plantea limitaciones. Algunos modelos preentrenados procesan de forma nativa solo la historia de la variable objetivo, mientras que el problema tratado requiere aprovechar información meteorológica y calendaria. Además, los datos de preentrenamiento pueden no representar adecuadamente las particularidades del consumo argentino, su sensibilidad térmica ni las diferencias entre regiones.
+\subsection{Ensambles}
+\label{subsec:modelos_ensambles}
 
-Por este motivo, estos modelos se consideraron como una familia adicional de métodos y no como sustitutos directos de los modelos supervisados. La comparación debe realizarse sobre los mismos períodos y métricas, diferenciando los resultados obtenidos sin ajuste de aquellos que requieran adaptación.
+Un ensamble combina las predicciones de varios modelos para compensar sus errores. El promedio reduce la varianza cuando los errores no están perfectamente correlacionados, mientras que el \textit{stacking} \cite{wolpert1992stacking} entrena un metamodelo que pondera las predicciones de los modelos base, con predicciones obtenidas sobre datos no utilizados en su entrenamiento. El mismo principio se aplica a la combinación de pronósticos obtenidos con distintas fuentes de información \cite{bates1969combination}, como un mismo modelo de demanda alimentado con distintos pronósticos meteorológicos.
+
+\subsection{Representación de la temperatura y corrección de pronósticos}
+\label{subsec:grados_dia}
+\label{subsec:correccion_pronosticos}
+
+La demanda responde a la temperatura con una zona de confort, en la que casi no varía, y dos tramos en los que crece con el calor y con el frío, con pendientes distintas \cite{valor2001temperature}. Los grados-día de refrigeración (CDD, \textit{Cooling Degree Days}) y de calefacción (HDD, \textit{Heating Degree Days}) representan cada tramo por separado, según la ecuación~\ref{eq:cdd}:
+
+\begin{equation}
+	\mathrm{CDD}_{t} = \max\left(0;\ T_{t} - T^{c}\right), \qquad \mathrm{HDD}_{t} = \max\left(0;\ T^{f} - T_{t}\right)
+	\label{eq:cdd}
+\end{equation}
+
+\noindent donde $T_{t}$ es la temperatura media del día $t$, y $T^{c}$ y $T^{f}$ son los umbrales a partir de los cuales la demanda responde al calor y al frío, que dependen del clima y del equipamiento de los usuarios de cada zona.
+
+Los pronósticos de los modelos numéricos presentan, además, errores sistemáticos que dependen de la ubicación, la estación y la anticipación. Los métodos MOS (\textit{Model Output Statistics}) \cite{glahn1972mos} los corrigen mediante relaciones estadísticas entre los valores pronosticados y los observados. La forma más simple resta al pronóstico el error medio de un período reciente. El mismo principio permite ajustar un pronóstico de demanda con el sesgo de los días recientes, sin reentrenar el modelo.
 
 %----------------------------------------------------------------------------------------
 \section{Infraestructura híbrida de datos y cómputo}
 \label{sec:infraestructura_computo}
 %----------------------------------------------------------------------------------------
 
-La infraestructura adoptó un esquema híbrido compuesto por Microsoft Fabric y un servidor local de CAMMESA. Fabric concentró la mayor parte del almacenamiento, procesamiento, experimentación y visualización, mientras que el entorno local atendió los procesos que requerían conectividad con sistemas internos.
+La infraestructura combinó Microsoft Fabric, que concentró el almacenamiento, el procesamiento, la experimentación y la visualización, con un servidor local de CAMMESA para los procesos que requerían conectividad con sistemas internos. Esta distribución respondió a restricciones de acceso y a la conveniencia de utilizar la plataforma institucional.
 
-Dentro de Fabric se utilizaron distintos tipos de elementos según la función requerida. Una base de datos KQL actuó como capa inicial o bronce para recibir información con un grado mínimo de elaboración. Las bases KQL están orientadas al análisis de datos temporales y pueden ser consultadas desde notebooks mediante Kusto Query Language \cite{microsoftFabricKQL}. El repositorio relacional central se implementó con un Data Warehouse \cite{microsoftFabricWarehouse}, con el objetivo de alojar las capas plata y oro. Allí se almacenaron datos normalizados, integrados y preparados para el consumo analítico mediante tablas y vistas T-SQL. También se utilizó un Data Lakehouse \cite{microsoftFabricLakehouse}, que se reservó principalmente para archivos auxiliares y para aquellos formatos que no requerían almacenamiento relacional.
+En Fabric, una base de datos KQL \cite{microsoftFabricKQL}, orientada al análisis de datos temporales, actuó como capa inicial para recibir la información con una elaboración mínima. Un warehouse \cite{microsoftFabricWarehouse} alojó las capas de datos normalizados e integrados, mediante tablas y vistas T-SQL, y un lakehouse \cite{microsoftFabricLakehouse} almacenó los archivos auxiliares. Los notebooks proporcionaron los entornos de ejecución de Python y PySpark, y los pipelines \cite{microsoftFabricPipeline} orquestaron notebooks, consultas y copias de datos. El acceso a las bases Oracle internas se realizó mediante una puerta de enlace de datos, que evita exponerlas a la red externa. El servidor local ejecutó Dagster y las bibliotecas de acceso a PI System, y escribió los resultados en el warehouse mediante autenticación de Azure.
 
-Los notebooks de Fabric \cite{microsoftFabricNotebooks} proporcionaron los entornos de ejecución para Python, pandas y PySpark. También sirvieron como espacio para la experimentación con modelos y para la integración con MLflow. Por otra parte, se utilizaron Pipelines \cite{microsoftFabricPipeline} para la orquestación entre notebooks, consultas y copias de datos. 
-
-El entrenamiento de los modelos neuronales se realizó en Google Colab, que proporciona aceleración por GPU sin requerir infraestructura propia. Para ello, los datos necesarios se exportaron desde el warehouse a archivos que se cargaron en el entorno de ejecución.
-
-La conexión con bases Oracle instaladas en la infraestructura de CAMMESA se realizó mediante una puerta de enlace de datos alojada en servidores de la empresa. Este componente permite que los servicios de Fabric accedan de manera controlada a fuentes locales sin exponer directamente las bases internas.
-
-El servidor local ejecutó Dagster y las bibliotecas necesarias para comunicarse con PI System y Fabric. Allí se programaron activos encargados de consultar las series internas, procesarlas con pandas y NumPy, y persistir los resultados en el Warehouse mediante autenticación de Azure. El enfoque basado en activos de Dagster facilita describir dependencias y programar actualizaciones periódicas, manteniendo separados el código de acceso a fuentes locales y los servicios administrados en la nube \cite{dagsterOverview,dagsterAssets}.
-
-Esta distribución de responsabilidades respondió a restricciones tecnológicas existentes y a la conveniencia de utilizar la plataforma institucional de CAMMESA. Fabric aporta almacenamiento centralizado, capacidad de procesamiento y servicios integrados de ciencia de datos, mientras que el servidor local conserva el acceso a fuentes que no están disponibles desde la nube. El diseño específico de los flujos, las dependencias entre componentes y los mecanismos de ejecución se desarrollan en el Capítulo~\ref{Chapter3}.
+La experimentación con los modelos se realizó en Google Colab \cite{googleColab}, principalmente con GPU NVIDIA L4 para las redes neuronales y con entornos sin GPU para los algoritmos basados en árboles y la búsqueda de hiperparámetros. Los datos se exportaron desde el warehouse a archivos cargados en el entorno de ejecución. El diseño de los flujos y los mecanismos de ejecución se desarrollan en el capítulo~\ref{Chapter3}.
