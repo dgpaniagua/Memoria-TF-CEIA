@@ -4,7 +4,7 @@
 
 \label{AppendixA}
 
-En este apéndice se describen las tablas y vistas del warehouse \code{WH\_PSYD} que intervienen en el pipeline de datos presentado en la sección~\ref{sec:pipeline_datos}. Se detallan los esquemas DEMANDA, METEO y PRONOS, junto con las dimensiones que los vinculan. Para cada objeto se indican la capa a la que pertenece, su clave y su contenido. Las variables comunes a varias tablas se describen una única vez.
+En este apéndice se describen las tablas y vistas del warehouse \code{WH\_PSYD} que intervienen en el pipeline de datos presentado en la sección~\ref{sec:pipeline_datos}. Se detallan los esquemas DEMANDA, METEO y PRONOS, junto con las dimensiones que los vinculan, y el esquema MODELOS, que almacena los resultados de los modelos en producción. Para cada objeto se indican la capa a la que pertenece, su clave y su contenido. Las variables comunes a varias tablas se describen una única vez.
 
 %----------------------------------------------------------------------------------------
 \section{Relaciones entre esquemas}
@@ -70,10 +70,10 @@ El esquema DEMANDA contiene la demanda eléctrica calculada a partir del SOTR y 
 	\renewcommand{\arraystretch}{1.15}
 	\begin{tabularx}{\textwidth}{
 			@{}
-			>{\raggedright\arraybackslash\hsize=1.1\hsize}X
-			>{\raggedright\arraybackslash\hsize=0.6\hsize}X
-			>{\raggedright\arraybackslash\hsize=0.9\hsize}X
-			>{\raggedright\arraybackslash\hsize=1.4\hsize}X
+			>{\raggedright\arraybackslash\hsize=0.85\hsize}X
+			>{\raggedright\arraybackslash\hsize=0.55\hsize}X
+			>{\raggedright\arraybackslash\hsize=0.8\hsize}X
+			>{\raggedright\arraybackslash\hsize=1.8\hsize}X
 			@{}
 		}
 		\toprule
@@ -255,9 +255,9 @@ El esquema PRONOS contiene los modelos y servicios de pronóstico meteorológico
 	\renewcommand{\arraystretch}{1.15}
 	\begin{tabularx}{\textwidth}{
 			@{}
-			>{\raggedright\arraybackslash\hsize=1.3\hsize}X
-			>{\raggedright\arraybackslash\hsize=0.55\hsize}X
-			>{\raggedright\arraybackslash\hsize=0.85\hsize}X
+			>{\raggedright\arraybackslash\hsize=1.15\hsize}X
+			>{\raggedright\arraybackslash\hsize=0.5\hsize}X
+			>{\raggedright\arraybackslash\hsize=1.05\hsize}X
 			>{\raggedright\arraybackslash\hsize=1.3\hsize}X
 			@{}
 		}
@@ -266,11 +266,11 @@ El esquema PRONOS contiene los modelos y servicios de pronóstico meteorológico
 		\midrule
 		\code{PRONOS\_TOTALES} & Dimensión & \code{PRON\_ID}, \code{FECHA\_DESDE} &
 		Modelos y servicios de pronóstico: servicio, modelo, horizonte en días, descripción, parámetro de consulta a la API y vigencia. \\ \addlinespace
-		\code{L2\_VALORES\_\allowbreak HORARIOS\_PRONOS} & Tabla, capa~2 & \code{FECHA\_CALCULO}, \code{FECHA\_HORA\_PRONOS}, \code{PRON\_ID}, \code{EMET\_ID} &
+		\code{L2\_VALORES\_\allowbreak HORARIOS\_PRONOS} & Tabla, capa~2 & \code{FECHA\_CALCULO}, \code{FECHA\_HORA\_\allowbreak PRONOS}, \code{PRON\_ID}, \code{EMET\_ID} &
 		Valores horarios pronosticados por los modelos de Open-Meteo. \\ \addlinespace
 		\code{L2\_VALORES\_\allowbreak DIARIOS\_PRONOS} & Tabla, capa~2 & \code{FECHA\_CALCULO}, \code{FECHA\_PRONOS}, \code{PRON\_ID}, \code{EMET\_ID} &
 		Valores diarios pronosticados por Open-Meteo, TWC y el SMN. \\ \addlinespace
-		\code{L3\_VALORES\_\allowbreak HORARIOS\_PRONOS\_\allowbreak REGIONES} & Vista, capa~3 & \code{FECHA\_CALCULO}, \code{FECHA\_HORA\_PRONOS}, \code{PRON\_ID}, \code{RGE\_ID} &
+		\code{L3\_VALORES\_\allowbreak HORARIOS\_PRONOS\_\allowbreak REGIONES} & Vista, capa~3 & \code{FECHA\_CALCULO}, \code{FECHA\_HORA\_\allowbreak PRONOS}, \code{PRON\_ID}, \code{RGE\_ID} &
 		Valores horarios pronosticados para cada región eléctrica. \\ \addlinespace
 		\code{L3\_VALORES\_\allowbreak DIARIOS\_PRONOS\_\allowbreak REGIONES} & Vista, capa~3 & \code{FECHA\_CALCULO}, \code{FECHA\_PRONOS}, \code{PRON\_ID}, \code{RGE\_ID} &
 		Valores diarios pronosticados para cada región eléctrica. \\
@@ -302,6 +302,47 @@ Las variables meteorológicas de estas tablas son las descritas en las tablas~\r
 		\code{PRON\_ID}, \code{MODELO} & Identificador y nombre del modelo o servicio de pronóstico. \\
 		\code{EMET\_ID}, \code{NOMBRE\_ESTACION} & Identificador y nombre de la estación cuyas coordenadas se utilizaron en la consulta. \\
 		\code{RGE\_ID}, \code{RGE\_NEMO} & Identificador y abreviatura de la región eléctrica (solo en las vistas de capa~3). \\
+		\bottomrule
+	\end{tabularx}
+\end{table}
+
+%----------------------------------------------------------------------------------------
+\section{Esquema MODELOS}
+\label{sec:apendice_modelos}
+%----------------------------------------------------------------------------------------
+
+El esquema MODELOS contiene el catálogo de modelos y de escenarios meteorológicos de producción, los pronósticos generados y los errores calculados a medida que se conocen los valores reales. La tabla~\ref{tab:esquema_modelos} describe sus objetos. Los escenarios se definen mediante reglas que indican, para cada variable meteorológica y rango de anticipaciones, la fuente utilizada y si se aplica la corrección del sesgo, por lo que un nuevo grupo de pronósticos puede incorporarse sin modificar el código.
+
+\begin{table}[H]
+	\centering
+	\caption{Tablas y vistas del esquema MODELOS.}
+	\label{tab:esquema_modelos}
+	\footnotesize
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	\begin{tabularx}{\textwidth}{
+			@{}
+			>{\raggedright\arraybackslash\hsize=1.0\hsize}X
+			>{\raggedright\arraybackslash\hsize=0.5\hsize}X
+			>{\raggedright\arraybackslash\hsize=1.0\hsize}X
+			>{\raggedright\arraybackslash\hsize=1.5\hsize}X
+			@{}
+		}
+		\toprule
+		\textbf{Objeto} & \textbf{Tipo y capa} & \textbf{Clave} & \textbf{Contenido} \\
+		\midrule
+		\code{MODELOS\_TOTALES} & Dimensión & \code{MOD\_ID}, \code{FECHA\_DESDE} &
+		Modelos productivos: nombre, algoritmo, variable objetivo, nivel (región o MEM), variante de temperatura y vigencia. \\ \addlinespace
+		\code{ESCENARIOS\_\allowbreak TOTALES} & Dimensión & \code{ESC\_ID} &
+		Escenarios meteorológicos: nombre, descripción y vigencia. \\ \addlinespace
+		\code{ESCENARIOS\_\allowbreak FUENTES} & Dimensión & \code{ESC\_ID}, \code{VARIABLE}, \code{ANT\_DESDE} &
+		Fuente (\code{PRON\_ID}) de cada variable meteorológica por rango de anticipaciones e indicador de corrección del sesgo. \\ \addlinespace
+		\code{RESULTADOS\_\allowbreak MODELOS} & Tabla, capa~2 & \code{FECHA\_CALCULO}, \code{FECHA\_PRONOS}, \code{MOD\_ID}, \code{ESC\_ID}, \code{RGE\_ID} &
+		Predicción de cada modelo y escenario, con la anticipación y la versión del modelo registrada en MLflow. \\ \addlinespace
+		\code{PRONOSTICOS\_\allowbreak DEMANDA} & Tabla, capa~2 & \code{FECHA\_CALCULO}, \code{FECHA\_PRONOS}, \code{TARGET\_ID}, \code{RGE\_ID} &
+		Pronóstico publicado de cada variable objetivo, valor previo a la corrección del sesgo, sesgo aplicado y fuentes utilizadas en el promedio. \\ \addlinespace
+		\code{ERRORES\_MODELOS} & Vista, capa~3 & \code{FECHA\_CALCULO}, \code{FECHA\_PRONOS}, \code{MOD\_ID}, \code{ESC\_ID}, \code{RGE\_ID} &
+		Valor real, error, error absoluto y error porcentual absoluto de cada predicción y del pronóstico publicado. \\
 		\bottomrule
 	\end{tabularx}
 \end{table}
