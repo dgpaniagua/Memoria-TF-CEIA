@@ -15,7 +15,7 @@ El lenguaje principal fue Python, por su amplia adopción en ciencia de datos y 
 
 Los modelos se implementaron con Darts \cite{herzen2022darts}, una biblioteca de series temporales que ofrece una interfaz común para entrenar y predecir con algoritmos clásicos y redes neuronales basadas en PyTorch. Darts admite el entrenamiento sobre múltiples series y covariables pasadas, futuras y estáticas, y resuelve la construcción de las ventanas de entrada y salida. Este enfoque permite evaluar familias de modelos distintas con un mismo procedimiento y reduce las diferencias de implementación que podrían afectar la comparación.
 
-La búsqueda de hiperparámetros se realizó con Optuna \cite{akiba2019optuna}. Su muestreador por defecto, TPE (\textit{Tree-structured Parzen Estimator}) \cite{bergstra2011tpe}, construye a partir de las pruebas anteriores un modelo probabilístico de las regiones del espacio con mejores resultados y propone las combinaciones siguientes en función de él, por lo que requiere menos evaluaciones que una búsqueda en grilla. El registro de experimentos y de versiones de modelos se apoyó en MLflow, integrado en Fabric \cite{microsoftFabricMLflow}, y la visualización de pronósticos y métricas, en Power BI.
+La búsqueda de hiperparámetros se realizó con Optuna \cite{akiba2019optuna}. Su muestreador por defecto, TPE (\textit{Tree-structured Parzen Estimator}) \cite{bergstra2011tpe}, construye a partir de las pruebas anteriores un modelo probabilístico de las regiones del espacio con mejores resultados y propone las combinaciones siguientes en función de él, por lo que requiere menos evaluaciones que una búsqueda en grilla. El registro de experimentos y de versiones de modelos se apoyó en MLflow, integrado en Fabric \cite{microsoftFabricMLflow}, y la visualización de pronósticos y métricas, en Power BI \cite{microsoftPowerBI}.
 
 %----------------------------------------------------------------------------------------
 \section{Fuentes de datos para el pronóstico de demanda}
@@ -47,7 +47,7 @@ La información meteorológica proviene de tres fuentes. El Servicio Meteorológ
 		\textbf{Fuente} & \textbf{Contenido principal} & \textbf{Resolución y cobertura} & \textbf{Condición de uso} \\
 		\midrule
 		SOTR (PI System) & Demanda eléctrica del SADI y sus regiones. & Diez minutos; nacional y regional. & Datos internos de CAMMESA. \\
-		Calendarios operativos & Días hábiles, feriados y clasificaciones especiales. & Diaria. & Información propia y de fuentes oficiales. \\
+		Calendarios operativos & Días hábiles, feriados y clasificaciones especiales. & Diaria & Información propia y de fuentes oficiales. \\
 		SMN & Observaciones y pronósticos meteorológicos. & Horaria y diaria; estaciones argentinas. & Datos abiertos con atribución. \\
 		Open-Meteo & Observaciones y pronósticos meteorológicos. & Horaria; por coordenadas geográficas. & Condiciones de uso de la API. \\
 		The Weather Channel & Pronósticos meteorológicos. & Horaria y diaria; ubicaciones seleccionadas. & Servicio de terceros. \\
@@ -84,8 +84,8 @@ Los modelos evaluados estiman los valores futuros de la variable objetivo a part
 		Random Forest \cite{breiman2001randomforest} & Aprendizaje automático & Promedio de árboles entrenados sobre muestras aleatorias. & Futuras y pasadas. \\
 		XGBoost \cite{chen2016xgboost} & Aprendizaje automático & \textit{Gradient boosting} con regularización de los árboles. & Futuras y pasadas. \\
 		LightGBM \cite{ke2017lightgbm} & Aprendizaje automático & \textit{Gradient boosting} con histogramas y crecimiento por hojas. & Futuras y pasadas. \\
-		LSTM \cite{hochreiter1997lstm} & Red recurrente & Celda de memoria con compuertas de entrada, olvido y salida. & Futuras. \\
-		GRU \cite{cho2014gru} & Red recurrente & Compuertas de actualización y de reinicio. & Futuras. \\
+		LSTM \cite{hochreiter1997lstm} & Red recurrente & Celda de memoria con compuertas de entrada, olvido y salida. & Futuras \\
+		GRU \cite{cho2014gru} & Red recurrente & Compuertas de actualización y de reinicio. & Futuras \\
 		TFT \cite{lim2021tft} & Múltiples pasos & Selección de variables, codificador recurrente y atención multicabezal. & Estáticas, pasadas y futuras. \\
 		TiDE \cite{das2023tide} & Múltiples pasos & Codificador y decodificador con bloques residuales densos. & Estáticas, pasadas y futuras. \\
 		TSMixer \cite{chen2023tsmixer} & Múltiples pasos & Perceptrones que mezclan las dimensiones temporal y de variables. & Estáticas, pasadas y futuras. \\
@@ -97,7 +97,7 @@ Los modelos evaluados estiman los valores futuros de la variable objetivo a part
 \subsection{Algoritmos de aprendizaje automático}
 \label{subsec:modelos_ml}
 
-La regresión lineal es interpretable y robusta, pero solo representa relaciones no lineales, como la respuesta de la demanda a la temperatura, si se incorporan mediante transformaciones de las variables. Los demás algoritmos combinan árboles de decisión. Random Forest promedia árboles entrenados sobre muestras aleatorias para reducir la varianza, mientras que el \textit{gradient boosting} \cite{friedman2001gbm} agrega árboles en forma secuencial, de modo que cada uno corrige los errores de los anteriores. XGBoost y LightGBM son implementaciones eficientes de este esquema. Sus principales hiperparámetros son la cantidad de árboles, la tasa de aprendizaje, la cantidad de hojas, el mínimo de observaciones por hoja, las fracciones de observaciones y de variables de cada árbol, y la regularización. Los modelos basados en árboles representan relaciones no lineales sin transformaciones previas, pero no extrapolan fuera del rango observado en el entrenamiento y requieren que la historia se presente como rezagos explícitos.
+La regresión lineal es interpretable y permite modelar relaciones lineales entre las variables. Para representar relaciones no lineales, como la respuesta de la demanda a la temperatura, es necesario incorporar transformaciones de las variables. Los demás algoritmos combinan árboles de decisión. Random Forest promedia árboles entrenados sobre muestras aleatorias para reducir la varianza, mientras que el \textit{gradient boosting} \cite{friedman2001gbm} agrega árboles en forma secuencial, de modo que cada uno corrige los errores de los anteriores. XGBoost y LightGBM son implementaciones eficientes de este esquema. Sus principales hiperparámetros son la cantidad de árboles, la tasa de aprendizaje, la cantidad de hojas, el mínimo de observaciones por hoja, las fracciones de observaciones y de variables de cada árbol, y la regularización. Los modelos basados en árboles representan relaciones no lineales sin transformaciones previas, pero no extrapolan fuera del rango observado en el entrenamiento y requieren que la historia se presente como rezagos explícitos.
 
 \subsection{Redes neuronales}
 \label{subsec:modelos_rnn}

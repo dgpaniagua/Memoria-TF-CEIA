@@ -630,7 +630,7 @@ Las covariables se organizaron en cinco grupos de complejidad creciente, present
 
 Los grupos G1 a G3 utilizan variables que informan todas las fuentes de pronóstico, mientras que G4 y G5 requieren temperatura aparente, nubosidad y radiación, que solo proveen los modelos numéricos obtenidos de Open-Meteo. Por este motivo, cada fuente se evaluó únicamente con los grupos cuyas variables informa en al menos el 95\,\% de los registros.
 
-La selección se realizó en dos fases. En la primera se eligió el grupo de covariables de cada algoritmo, variable objetivo y región, como el de menor MAPE promedio sobre las 15 anticipaciones en una validación con origen móvil entre el 01/09/2024 y el 31/08/2025, con meteorología observada y reentrenamiento mensual. Las fechas de cálculo se limitaron de modo que todos los días pronosticados quedaran dentro de ese período, por lo que el conjunto de prueba no intervino en la elección. En la segunda fase, los modelos se evaluaron sobre el período de prueba con reentrenamiento semanal, con la meteorología observada y con los pronósticos de cada fuente. Cuando el grupo elegido requería variables que una fuente no provee, se utilizó el siguiente grupo del orden obtenido en la primera fase.
+La selección se realizó en dos fases. En la primera se eligió el grupo de covariables de cada algoritmo, variable objetivo y región. Para ello, se realizó una validación con origen móvil entre el 01/09/2024 y el 31/08/2025, con meteorología observada y reentrenamiento mensual, y se adoptó el grupo con menor MAPE promedio sobre las 15 anticipaciones. Las fechas de cálculo se limitaron de modo que todos los días pronosticados quedaran dentro de ese período, por lo que el conjunto de prueba no intervino en la elección. En la segunda fase, los modelos se evaluaron sobre el período de prueba con reentrenamiento semanal, con la meteorología observada y con los pronósticos de cada fuente. Cuando el grupo elegido requería variables que una fuente no provee, se utilizó el siguiente grupo del orden obtenido en la primera fase.
 
 %----------------------------------------------------------------------------------------
 \subsection{Modelos de aprendizaje profundo, fundacionales y ensambles}
@@ -674,7 +674,7 @@ El entrenamiento utilizó la pérdida L1, el optimizador Adam con una tasa de ap
 
 Chronos-2 se utilizó sin ajuste (\textit{zero-shot}) a través de Darts y con ajuste mediante LoRA en cada reentrenamiento, a través de la biblioteca oficial del modelo, ya que Darts no admite su ajuste. El ajuste partió en cada caso del modelo preentrenado, con 500 pasos de optimización y una tasa de aprendizaje de $10^{-5}$.
 
-Para que la comparación con el modelo de referencia dependiera únicamente del modelo, LightGBM se volvió a evaluar con el grupo G5 y reentrenamiento mensual. Se incorporó, además, una variante con hiperparámetros ajustados (LGBM\_OPT). La búsqueda se realizó con Optuna, con 50 pruebas por variable objetivo sobre el espacio de la tabla~\ref{tab:espacio_optuna}, y minimizó el MAPE promedio de las 15 anticipaciones en un backtesting con meteorología observada entre el 01/09/2024 y el 31/08/2025, con reentrenamiento trimestral, por lo que no utilizó el período de prueba.
+Para que la comparación con el modelo de referencia dependiera únicamente del modelo, LightGBM se volvió a evaluar con el grupo G5 y reentrenamiento mensual. Se incorporó, además, una variante con hiperparámetros ajustados (LGBM\_OPT). La búsqueda se realizó con Optuna, con 50 pruebas por variable objetivo sobre el espacio de la tabla~\ref{tab:espacio_optuna}. Cada prueba se evaluó con el MAPE promedio de las 15 anticipaciones en una validación con origen móvil, con meteorología observada y reentrenamiento trimestral, entre el 01/09/2024 y el 31/08/2025. De este modo, la búsqueda no utilizó el período de prueba.
 
 \begin{table}[H]
 	\centering
@@ -710,7 +710,7 @@ Sobre las predicciones de los modelos individuales se construyeron los dos ensam
 \label{subsec:covariables_agregacion}
 %----------------------------------------------------------------------------------------
 
-La tercera etapa definió las covariables, las fuentes meteorológicas y el nivel de agregación de los pronósticos. A partir de los resultados de la etapa anterior, presentados en el capítulo~\ref{Chapter4}, se mantuvieron SNAIVE, LGBM\_OPT, GRU, LSTM, TSMixer y TFT, este último como representante de las arquitecturas basadas en atención. Los ensambles se construyeron con LGBM\_OPT, GRU, LSTM y TSMixer. Además de la meteorología observada, se evaluaron los pronósticos de IFS, ICON y GFS. Este último solo está disponible desde abril de 2026, por lo que su evaluación se limita a ese período.
+La tercera etapa definió las covariables, las fuentes meteorológicas y el nivel de agregación de los pronósticos. A partir de los resultados de la etapa anterior, que se presentan en el capítulo~\ref{Chapter4}, se mantuvieron SNAIVE, LGBM\_OPT, GRU, LSTM, TSMixer y TFT, este último como representante de las arquitecturas basadas en atención. Los ensambles se construyeron con LGBM\_OPT, GRU, LSTM y TSMixer. Además de la meteorología observada, se evaluaron los pronósticos de IFS, ICON y GFS. Este último solo está disponible desde abril de 2026, por lo que su evaluación se limita a ese período.
 
 La temperatura aparente de G5 requiere humedad, viento y radiación, y solo la informan los modelos numéricos de Open-Meteo. Para evaluar si justifica esa dependencia y para aprovechar las fuentes que informan únicamente la temperatura del aire, como el SMN y TWC, se definió el grupo G5A, que reemplaza las temperaturas aparentes de G5 por las temperaturas del aire máxima y mínima.
 
@@ -734,8 +734,8 @@ El grupo G5A permite construir grupos de pronósticos, que son escenarios en los
 		\toprule
 		\textbf{Grupo} & \textbf{Temperaturas máxima y mínima} & \textbf{Humedad, nubosidad y radiación} & \textbf{Viento} \\
 		\midrule
-		SMN + TWC + IFS & SMN en los días 0 a 6 y TWC en los días 7 a 14. & IFS. & TWC. \\
-		TWC + IFS & TWC. & IFS. & TWC. \\
+		SMN + TWC + IFS & SMN en los días 0 a 6 y TWC en los días 7 a 14. & IFS & TWC \\
+		TWC + IFS & TWC & IFS & TWC \\
 		\bottomrule
 	\end{tabularx}
 \end{table}
@@ -749,7 +749,7 @@ En cuanto al nivel de agregación, la energía del MEM puede obtenerse como suma
 \label{subsec:respuesta_temperatura}
 %----------------------------------------------------------------------------------------
 
-El análisis de los errores de la etapa anterior, presentado en el capítulo~\ref{Chapter4}, mostró que los modelos subestiman la demanda en los días de mayor consumo. Para representar mejor la respuesta de la demanda a la temperatura, se definieron los grupos G6 y G6A, que modifican G5 y G5A en tres aspectos: reemplazan los cuadrados de las temperaturas por los grados-día presentados en la sección~\ref{subsec:grados_dia}, incorporan su persistencia y agregan los feriados vecinos.
+El análisis de los errores de la etapa anterior mostró que los modelos subestiman la demanda en los días de mayor consumo. Para representar mejor la respuesta de la demanda a la temperatura, se definieron los grupos G6 y G6A, que modifican G5 y G5A en tres aspectos: reemplazan los cuadrados de las temperaturas por los grados-día presentados en la sección~\ref{subsec:grados_dia}, incorporan su persistencia y agregan los feriados vecinos.
 
 Los grados-día de cada región se calculan con su temperatura media, aparente en G6 y del aire en G6A, y se acompañan de sus cuadrados, que permiten representar una respuesta que se acelera en los extremos. Los umbrales se estimaron por región con los dos años anteriores al período de prueba. Para cada región se ajustó, por mínimos cuadrados, un modelo de la energía diaria en función de la tendencia, el feriado, el día de la semana y los dos tramos de temperatura, y se eligieron los umbrales de menor error en una grilla de 0,5~\textdegree C. La tabla~\ref{tab:umbrales_grados_dia} presenta los valores obtenidos. Las diferencias entre regiones son marcadas, y GBA presenta la zona de confort más alta.
 
@@ -853,7 +853,7 @@ La puesta en producción integra el pipeline de datos y los modelos seleccionado
 \label{subsec:configuracion_productiva}
 %----------------------------------------------------------------------------------------
 
-La configuración se eligió a partir de la evaluación del capítulo~\ref{Chapter4}. Los pronósticos se obtienen con el ensamble ENS\_STACK, que combina LGBM\_OPT, LSTM y TSMixer con las covariables de la sección~\ref{subsec:respuesta_temperatura}, y con las correcciones de la sección~\ref{subsec:postproceso}. Se mantienen cuatro conjuntos de modelos, que corresponden a las configuraciones con G6 y G6A de la tabla~\ref{tab:configuraciones}:
+Para generar los pronósticos se utiliza el ensamble ENS\_STACK, que combina LGBM\_OPT, LSTM y TSMixer con las covariables de la sección~\ref{subsec:respuesta_temperatura}, y con las correcciones de la sección~\ref{subsec:postproceso}. Se mantienen cuatro conjuntos de modelos, que corresponden a las configuraciones con G6 y G6A de la tabla~\ref{tab:configuraciones}:
 
 \begin{itemize}
 	\item Energía de cada región, con temperatura aparente y con temperatura del aire. La energía del MEM se obtiene como suma de las regiones.
@@ -867,7 +867,7 @@ Para cada variable, el pronóstico publicado es el promedio de las predicciones 
 \label{subsec:arquitectura_produccion}
 %----------------------------------------------------------------------------------------
 
-La figura~\ref{fig:arquitectura_produccion} presenta los componentes del sistema en producción. El proceso diario se orquesta mediante el pipeline \code{PPLN\_MODELOS}, que se ejecuta una vez finalizada la carga de pronósticos meteorológicos de \code{PPLN\_PRONOS}. El reentrenamiento se orquesta en un pipeline independiente, \code{PPLN\_REENTRENO}, con frecuencia semanal. Ambos procesos leen las vistas de capa~3 de los esquemas DEMANDA, METEO y PRONOS, de modo que los modelos consumen en producción los mismos datos que se utilizaron durante el desarrollo.
+La figura~\ref{fig:arquitectura_produccion} presenta los componentes del sistema en producción. El proceso diario se orquesta mediante el pipeline \code{PPLN\_MODELOS}, que se ejecuta una vez finalizada la carga de pronósticos meteorológicos de \code{PPLN\_PRONOS}. El reentrenamiento se orquesta en un pipeline independiente, \code{PPLN\_REENTRENO}, con frecuencia semanal. Ambos procesos consultan las vistas  de los esquemas \code{DEMANDA}, \code{METEO} y \code{PRONOS} (capa~3), de modo que los modelos consumen en producción los mismos datos que se utilizaron durante el desarrollo.
 
 \begin{figure}[H]
 	\centering
@@ -935,7 +935,7 @@ A continuación, el notebook de pronóstico construye los escenarios meteorológ
 
 Finalmente, el notebook de postproceso promedia los escenarios disponibles y aplica la corrección del sesgo reciente, con los errores de los últimos 28 días obtenidos de la vista de errores. La corrección se aplica a cada serie publicada: la energía de cada región y la energía, la potencia pico y la potencia mínima del MEM.
 
-Los resultados se escriben en dos tablas del esquema MODELOS. La primera conserva las predicciones de cada modelo y escenario, con la versión del modelo que las generó, y permite comparar en forma continua el efecto de cada fuente meteorológica. La segunda contiene el pronóstico publicado, junto con el valor previo a la corrección del sesgo. Ambas se describen en el apéndice~\ref{AppendixA}. Como en el resto del pipeline, la escritura elimina previamente los registros de la fecha de cálculo procesada, por lo que una ejecución puede repetirse sin generar duplicados.
+Los resultados se escriben en dos tablas del esquema \code{MODELOS}. La primera conserva las predicciones de cada modelo y escenario, con la versión del modelo que las generó, y permite comparar en forma continua el efecto de cada fuente meteorológica. La segunda contiene el pronóstico publicado, junto con el valor previo a la corrección del sesgo. Ambas se describen en el apéndice~\ref{AppendixA}. Como en el resto del pipeline, la escritura elimina previamente los registros de la fecha de cálculo procesada, por lo que una ejecución puede repetirse sin generar duplicados.
 
 %----------------------------------------------------------------------------------------
 \subsection{Reentrenamiento y registro de modelos}
@@ -953,6 +953,6 @@ Cada modelo entrenado se registra en MLflow junto con sus parámetros de estanda
 \label{subsec:monitoreo}
 %----------------------------------------------------------------------------------------
 
-La vista \code{MODELOS.ERRORES\_MODELOS} vincula cada pronóstico con el valor real de la variable objetivo y calcula el error, el error absoluto y el error porcentual absoluto. Los valores reales se toman de la vista \code{DEMANDAS\_DIARIA\_REGIONES} para las regiones y de \code{DEMANDAS\_MEM} para el MEM, ambas del esquema DEMANDA. Los valores se incorporan automáticamente a medida que se completa la demanda de cada día, de modo que las métricas se actualizan sin intervención manual. La misma vista provee los errores que utiliza la corrección del sesgo reciente.
+La vista \code{MODELOS.ERRORES\_MODELOS} vincula cada pronóstico con el valor real de la variable objetivo y calcula el error, el error absoluto y el error porcentual absoluto. Los valores reales se toman de la vista \code{DEMANDAS\_DIARIA\_REGIONES} para las regiones y de \code{DEMANDAS\_MEM} para el MEM, ambas del esquema \code{DEMANDA}. Los valores se incorporan automáticamente a medida que se completa la demanda de cada día, de modo que las métricas se actualizan sin intervención manual. La misma vista provee los errores que utiliza la corrección del sesgo reciente.
 
 Sobre esta vista se construyó un informe de Power BI que presenta el MAE, el RMSE y el MAPE en ventanas móviles, desagregados por modelo, variable objetivo, región, anticipación y fuente meteorológica. El informe permite comparar el desempeño reciente con el obtenido en la evaluación del capítulo~\ref{Chapter4}, seguir el comportamiento de los modelos en los días de alta demanda y analizar períodos particulares, como olas de calor o feriados.
