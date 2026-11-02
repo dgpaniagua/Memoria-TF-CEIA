@@ -3,35 +3,43 @@
 \chapter{Conclusiones} % Main chapter title
 
 \label{Chapter5} % Change X to a consecutive number; for referencing this chapter elsewhere, use \ref{ChapterX}
-Todos los capítulos deben comenzar con un breve párrafo introductorio que indique cuál es el contenido que se encontrará al leerlo.  La redacción sobre el contenido de la memoria debe hacerse en presente y todo lo referido al proyecto en pasado, siempre de modo impersonal.
 
-
-%----------------------------------------------------------------------------------------
+En este capítulo se presentan las conclusiones del trabajo. Se analiza el grado de cumplimiento de los objetivos y se comparan los resultados con los antecedentes del estado del arte. Luego, se mencionan los conocimientos de la carrera aplicados y, por último, se proponen líneas de trabajo futuro.
 
 %----------------------------------------------------------------------------------------
-%	SECTION 1
+\section{Conclusiones generales}
+\label{sec:logros}
 %----------------------------------------------------------------------------------------
 
-\section{Conclusiones generales }
+Se cumplió el objetivo general del trabajo. Se desarrolló e implementó una solución que pronostica todos los días, para los días $D$ a $D+14$, la energía y la potencia pico de cada región eléctrica y la energía y las potencias pico y mínima del MEM, sin intervención manual.
 
-La idea de esta sección es resaltar cuáles son los principales aportes del trabajo realizado y cómo se podría continuar. Debe ser especialmente breve y concisa. Es buena idea usar un listado para enumerar los logros obtenidos.
+El pronóstico regional superó al pronóstico directo del total del sistema, lo que confirma la hipótesis que motivó el trabajo. La suma de los pronósticos de las diez regiones obtuvo un error menor que el pronóstico directo de la energía del MEM en todos los modelos evaluados. Además de ser más preciso, el enfoque regional aporta a los especialistas los pronósticos de cada región, que antes no estaban disponibles.
 
-En esta sección no se deben incluir ni tablas ni gráficos.
+El pronóstico publicado mejoró las métricas de los modelos que CAMMESA utilizaba antes del trabajo. En el período de prueba, con los pronósticos meteorológicos disponibles en cada fecha de cálculo, la reducción del MAPE para la energía fue del 24\,\% en promedio para todas las anticipaciones y alcanzó el 41\,\% en la anticipación~1. El pronóstico publicado superó también a la previsión de la Programación Semanal.
 
-Algunas preguntas que pueden servir para completar este capítulo:
+En relación con el estado del arte, con la meteorología observada, las redes neuronales superaron al modelo de referencia, y TSMixer obtuvo el menor error individual. Esto es coherente con los trabajos que muestran que los modelos basados en perceptrones pueden competir con los basados en Transformers a un costo menor \cite{das2023tide,chen2023tsmixer}. Chronos-2, en cambio, no alcanzó al modelo de referencia, ni siquiera con ajuste, a diferencia de lo reportado para la demanda residencial \cite{meyer2025foundationload}. Con los pronósticos meteorológicos, las diferencias entre modelos se reducen, porque el error de la temperatura pronosticada domina a partir de los primeros días. Por este motivo, una parte relevante de la mejora provino de la combinación de fuentes meteorológicas y de la corrección de los pronósticos.
+
+Se logró la automatización de todo el proceso productivo. La solución integra la demanda del SOTR, la meteorología observada y los pronósticos de tres fuentes en una arquitectura por capas en Microsoft Fabric. La cadena diaria, orquestada por \code{PPLN\_DIARIO}, publica los pronósticos en menos de media hora, y el reentrenamiento semanal actualiza los 24 modelos con un control previo a su reemplazo y su registro en MLflow. La arquitectura resultó robusta: las fuentes alternativas, la validación de entradas, el control de los reentrenamientos y las notificaciones evitan publicar resultados incompletos o modelos defectuosos. Las métricas, las bandas de error y las alertas de alta demanda quedan disponibles en el informe de monitoreo, lo que cumple el objetivo de seguimiento del desempeño.
+
+Los resultados presentan también limitaciones. En los días de alta demanda, el pronóstico publicado mantiene una subestimación sistemática, con un sesgo de $-4{,}15$\,\% en la energía, que las alertas compensan solo en parte. Los feriados concentran los mayores errores de las primeras anticipaciones, y la cobertura de las bandas de la energía, de entre el 79\,\% y el 84\,\%, es inferior a la nominal del 90\,\%. 
+
+%----------------------------------------------------------------------------------------
+\section{Conocimientos aplicados}
+\label{sec:conocimientos}
+%----------------------------------------------------------------------------------------
+
+El trabajo integró conocimientos de varias asignaturas de la carrera. Análisis de Datos y Probabilidad y Estadística aportaron las herramientas para la depuración de las series, la definición de las métricas y el estudio de la distribución de los errores. Aprendizaje de Máquina fundamentó el uso de los modelos basados en árboles, la búsqueda de hiperparámetros y los ensambles, mientras que Aprendizaje Profundo aportó las bases de las redes recurrentes y de las arquitecturas modernas. Análisis de Series de Tiempo I y II proporcionaron los conceptos de validación con origen móvil, estrategias recursiva y directa, modelos globales y covariables. En Operaciones de Aprendizaje Automático, se trataron las prácticas de registro de modelos, reentrenamiento y despliegue. 
+
+%----------------------------------------------------------------------------------------
+\section{Trabajo futuro}
+\label{sec:trabajo_futuro}
+%----------------------------------------------------------------------------------------
+
+A partir de los resultados y de las limitaciones identificadas, se proponen las siguientes líneas de trabajo:
 
 \begin{itemize}
-\item ¿Cuál es el grado de cumplimiento de los requerimientos?
-\item ¿Cuán fielmente se puedo seguir la planificación original (cronograma incluido)?
-\item ¿Se manifestó algunos de los riesgos identificados en la planificación? ¿Fue efectivo el plan de mitigación? ¿Se debió aplicar alguna otra acción no contemplada previamente?
-\item Si se debieron hacer modificaciones a lo planificado ¿Cuáles fueron las causas y los efectos?
-\item ¿Qué técnicas resultaron útiles para el desarrollo del proyecto y cuáles no tanto?
+	\item Obtención de los datos del SOTR mediante PI Web API. La demanda se consulta hoy desde el servidor local de Dagster, que constituye el componente con menor respaldo de la arquitectura. CAMMESA dispone de una puerta de enlace que implementa PI Web API en un servidor con mayor respaldo y rendimiento, desde la que podrían obtenerse esos datos sin depender del servidor local.
+	\item Pronóstico horario por región para la anticipación~1. La programación diaria requiere la curva de demanda del día siguiente, por lo que el pronóstico horario de cada región complementaría los valores diarios actuales. Los datos horarios de cada región ya se encuentra disponible en el warehouse.
+	\item Mejora del pronóstico en los días de alta demanda. Entre las alternativas se encuentran el uso de los pronósticos meteorológicos por ensambles, que permiten estimar la probabilidad de temperaturas extremas, la incorporación de covariables que representen la persistencia de las olas de calor y el entrenamiento con funciones de pérdida por cuantiles. 
+	\item Tratamiento específico de los feriados, cuya historia contiene pocos casos de cada tipo.
 \end{itemize}
-
-
-%----------------------------------------------------------------------------------------
-%	SECTION 2
-%----------------------------------------------------------------------------------------
-\section{Próximos pasos}
-
-Acá se indica cómo se podría continuar el trabajo más adelante.
