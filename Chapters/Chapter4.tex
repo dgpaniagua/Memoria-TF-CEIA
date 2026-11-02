@@ -492,7 +492,7 @@ La cobertura de la banda entre los percentiles 5 y 95, cuyo valor nominal es del
 \label{sec:ensayos_integracion}
 %----------------------------------------------------------------------------------------
 
-Los ensayos de integración verificaron que el sistema en producción reproduce los resultados de la evaluación y opera en forma automática con los datos reales. Se realizaron en tres etapas: la verificación del módulo con los modelos de la evaluación, una marcha blanca con esos modelos y la ejecución con los modelos registrados en MLflow.
+Los ensayos de integración verificaron que el sistema en producción reproduce los resultados de la evaluación y opera en forma automática con los datos reales. Se realizaron en tres etapas: la verificación del módulo con los modelos de la evaluación, una marcha blanca con esos modelos y la ejecución con los modelos registrados en MLflow. Los resultados de esta sección corresponden a la operación hasta el 02/11/2026.
 
 \subsection{Verificación del módulo y carga de la historia}
 
@@ -500,18 +500,41 @@ El módulo \code{pronodem-idp} incluye pruebas unitarias de los grados-día, de 
 
 Con esos modelos se generó la historia de pronósticos desde el 01/09/2025 hasta el 11/10/2026, con 2\,238\,912 registros en la tabla de resultados, identificados con la versión \code{BACKTEST}. Las métricas calculadas desde la vista de errores fueron equivalentes a las de la sección~\ref{subsec:resultados_postproceso}. El notebook diario, ejecutado para el 11/10/2026, generó la misma cantidad de registros y las mismas alertas que la historia, con una diferencia media en los valores de 0,0002\,\%.
 
-\subsection{Marcha blanca y ejecución diaria}
+\subsection{Evaluación de la ejecución diaria en producción}
 
-Entre el 12/10/2026 y el 19/10/2026, el notebook de pronóstico se ejecutó con los modelos mensuales de la evaluación, almacenados en el lakehouse. Desde el 20/10/2026 utiliza los modelos registrados en MLflow, y desde el 22/10/2026 se ejecuta en forma automática con \code{PPLN\_DIARIO}. Cada fecha de cálculo genera 6\,241 registros, que corresponden a los modelos base, a ENS\_PROM de cada grupo de pronósticos y al pronóstico publicado. En todas las fechas, los cinco grupos de pronósticos estuvieron completos, sin necesidad de recurrir a las fuentes alternativas.
+Entre el 12/10/2026 y el 19/10/2026, el notebook de pronóstico se ejecutó con los modelos mensuales de la evaluación, almacenados en el lakehouse. Desde el 20/10/2026 utiliza los modelos registrados en MLflow, y desde el 22/10/2026 se ejecuta en forma automática con \code{PPLN\_DIARIO}. Hasta el 02/11/2026 se generaron pronósticos para 22 fechas de cálculo, cada una con 6\,241 registros, que corresponden a los modelos base, a ENS\_PROM de cada grupo de pronósticos y al pronóstico publicado. En todas las fechas, los cinco grupos de pronósticos estuvieron completos, sin necesidad de recurrir a las fuentes alternativas.
 
-En las ejecuciones programadas, los resultados se escribieron entre las 08:47 y las 08:48, unos 17 minutos después del inicio de \code{PPLN\_DIARIO}, que incluye los 10 minutos de espera previos a \code{PPLN\_METEO}. \textbf{[PENDIENTE: duración de \code{NB\_MODELOS\_PRONOSTICO} y de cada pipeline, según el monitor de Fabric.]}
+La tabla~\ref{tab:duracion_ejecuciones} presenta la duración de los pipelines y notebooks entre el 22/10/2026 y el 02/11/2026, según el monitor de Fabric. La generación de los pronósticos demoró entre 4 y 5 minutos. Los domingos, la duración de \code{PPLN\_DIARIO} incluye el reentrenamiento.
 
-La carga de la Programación Semanal incorporó las 60 publicaciones desde el 21/08/2025, y la ejecución diaria agrega las nuevas publicaciones a medida que están disponibles.
+\begin{table}[H]
+	\centering
+	\caption{Duración de las ejecuciones programadas entre el 22/10/2026 y el 02/11/2026, en minutos.}
+	\label{tab:duracion_ejecuciones}
+	\small
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}llc@{}}
+		\toprule
+		\textbf{Componente} & \textbf{Ejecuciones} & \textbf{Duración} \\
+		\midrule
+		\code{PPLN\_PRONOS} & Todas & 2,4 a 2,7 \\
+		\code{PPLN\_METEO} (depende de disponibilidad de SMN) & Todas & 9,4 a 16,8 \\
+		\code{NB\_PSEM\_L1} & Todas & 1,2 a 1,5 \\
+		\code{NB\_MODELOS\_PRONOSTICO} & Todas & 4,0 a 4,9 \\
+		\code{PPLN\_MODELOS} & Todas & 4,3 a 5,3 \\
+		\code{PPLN\_REENTRENO} & Domingos & 36,8 a 38,2 \\
+		\code{PPLN\_DIARIO} & Lunes a sábado & 17,9 a 30,2 \\
+		\code{PPLN\_DIARIO} & Domingos & 56,8 a 57,5 \\
+		\bottomrule
+	\end{tabular*}
+\end{table}
+
+La única falla se produjo el 28/10/2026. En la ejecución programada, la carga de los pronósticos de Open-Meteo no se completó por una falla transitoria de la API. El notebook que realiza la consulta no tenía reintentos, por lo que se incorporó esa funcionalidad para evitar este tipo de fallas en el futuro.
+
+La carga de la Programación Semanal incorporó las 60 publicaciones desde el 21/08/2025, y la ejecución diaria agrega las nuevas publicaciones a medida que están disponibles. Al 02/11/2026, la tabla de resultados contiene 62 publicaciones, la última del 29/10/2026.
 
 \subsection{Reentrenamiento}
 
-El reentrenamiento se ensayó en Fabric, sin GPU, con datos hasta el 18/10/2026. La lectura de los datos demoró entre 30 y 32 segundos. El entrenamiento de LightGBM para la potencia pico del MEM demoró 1 segundo; el de TSMixer para la misma variable, 20 segundos, y el de TSMixer para la energía regional, el modelo de mayor costo, 335 segundos. Los tres modelos superaron el control y obtuvieron, en los últimos 28 días, un MAPE con la meteorología observada inferior al de los modelos mensuales vigentes: 0,95\,\% frente a 1,84\,\%, 1,38\,\% frente a 2,28\,\% y 2,35\,\% frente a 2,99\,\%, respectivamente. \textbf{[PENDIENTE: duración del primer reentrenamiento semanal completo, con los 24 modelos.]}
+El reentrenamiento se ensayó en Fabric, sin GPU, con datos hasta el 18/10/2026. La lectura de los datos demoró entre 30 y 32 segundos. El entrenamiento de LightGBM para la potencia pico del MEM demoró 1 segundo; el de TSMixer para la misma variable, 20 segundos, y el de TSMixer para la energía regional, el modelo de mayor costo, 335 segundos. Los tres modelos superaron el control y obtuvieron, en los últimos 28 días, un MAPE con la meteorología observada inferior al de los modelos mensuales vigentes: 0,95\,\% frente a 1,84\,\%, 1,38\,\% frente a 2,28\,\% y 2,35\,\% frente a 2,99\,\%, respectivamente.
 
-\subsection{Primeros resultados en producción}
-
-Entre el 12/10/2026 y el 23/10/2026, el pronóstico publicado obtuvo un MAPE de 1,09\,\% en la energía, 1,77\,\% en la potencia pico y 1,77\,\% en la potencia mínima del MEM, con una cobertura de la banda del 95\,\% en la energía. En las 44 combinaciones de fecha de cálculo y anticipación en las que también se dispone del proceso anterior, el MAPE de la energía fue de 1,12\,\%, frente a 1,41\,\% de la regresión lineal, y el de la potencia pico, de 1,81\,\%, frente a 1,95\,\%. En la potencia mínima, en cambio, la mejor variante de XGBoost obtuvo 1,55\,\%, frente a 1,84\,\%. Estos valores son inferiores a los del período de prueba porque corresponden a solo 12 días de octubre, un mes con errores bajos, por lo que no son representativos del desempeño anual.
+El primer reentrenamiento semanal completo se ejecutó el 25/10/2026, con datos hasta el 24/10/2026. El notebook \code{NB\_MODELOS\_REENTRENO} entrenó, controló y registró los 24 modelos en 36 minutos. Se aprobaron 22 modelos y se rechazaron 2, ambos del grupo G6A: TSMixer para la energía regional, con un MAPE de 3,12\,\% frente a 2,47\,\% de la versión vigente, y LSTM para la potencia mínima del MEM, con 1,12\,\% frente a 0,94\,\%. En los dos casos, el error superó el límite del 10\,\% respecto de la versión vigente, que se mantuvo en uso, y el pipeline envió la notificación de modelos rechazados. El segundo reentrenamiento, del 01/11/2026, demoró 35 minutos y aprobó los 24 modelos.
