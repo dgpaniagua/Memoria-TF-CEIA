@@ -44,7 +44,7 @@ Los datos utilizados comienzan el 01/01/2021. La tabla~\ref{tab:particion_datos}
 \subsection{Métricas}
 \label{subsec:metricas}
 
-Se utilizaron las métricas definidas en la sección~\ref{sec:objetivos}: el error absoluto medio (MAE), la raíz del error cuadrático medio (RMSE) y el error porcentual absoluto medio (MAPE). Se agregó, además, el error porcentual medio, que mide el sesgo del pronóstico. Para un conjunto de $n$ pronósticos $\hat{y}_i$ con valores observados $y_i$, y con el error definido como $e_i = \hat{y}_i - y_i$, las métricas se calculan según las ecuaciones~\ref{eq:mae} a \ref{eq:sesgo}:
+Se utilizaron el error absoluto medio (MAE), la raíz del error cuadrático medio (RMSE) y el error porcentual absoluto medio (MAPE). Se agregó, además, el error porcentual medio, que mide el sesgo del pronóstico. Para un conjunto de $n$ pronósticos $\hat{y}_i$ con valores observados $y_i$, y con el error definido como $e_i = \hat{y}_i - y_i$, las métricas se calculan según las ecuaciones~\ref{eq:mae} a \ref{eq:sesgo}:
 
 \begin{equation}
 	\mathrm{MAE} = \frac{1}{n} \sum_{i=1}^{n} \left| e_i \right|
@@ -73,7 +73,7 @@ Las métricas se calculan por anticipación, de 0 a 14 días, y como promedio de
 \subsection{Alcance y condiciones de comparación}
 \label{subsec:condiciones_comparacion}
 
-Para acotar la extensión del capítulo, los resultados se presentan para el MEM. Las métricas de cada región eléctrica no se incluyen, aunque se calcularon con el mismo procedimiento y se encuentran disponibles en el sistema de monitoreo. En las configuraciones regionales, la energía del MEM se obtiene como suma de los pronósticos de las diez regiones, y se consideran solo las fechas en las que se dispone del pronóstico de todas ellas. Las potencias pico y mínima del MEM corresponden al pronóstico directo.
+Los resultados se presentan para el MEM. Las métricas de cada región eléctrica no se incluyen, aunque se calcularon con el mismo procedimiento y se encuentran disponibles en el sistema de monitoreo. En las configuraciones regionales, la energía del MEM se obtiene como suma de los pronósticos de las diez regiones, y se consideran solo las fechas en las que se dispone del pronóstico de todas ellas. Las potencias pico y mínima del MEM corresponden al pronóstico directo.
 
 Los resultados se presentan por escenario meteorológico. El escenario con meteorología observada mide el error propio del modelo de demanda, mientras que el escenario con el pronóstico de IFS representa las condiciones de producción. IFS se adoptó como escenario principal porque es la única fuente con pronósticos de 15 días durante todo el período de prueba. ICON cubre solo las anticipaciones 0 a 6, y GFS está disponible desde el 02/04/2026. Por lo tanto, sus métricas no son comparables con las de los demás escenarios y solo se mencionan cuando aportan información adicional.
 
@@ -97,10 +97,10 @@ La tabla~\ref{tab:resultados_referencia} presenta las métricas de la energía d
 	\centering
 	\caption{Métricas de la energía del MEM de los modelos evaluados en la selección del modelo de referencia, promedio de las anticipaciones 0 a 14. MAPE y sesgo en \%, RMSE en GWh.}
 	\label{tab:resultados_referencia}
-	\footnotesize
+	\small
 	\setlength{\tabcolsep}{4pt}
 	\renewcommand{\arraystretch}{1.15}
-	\begin{tabular}{@{}lcccccc@{}}
+	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lcccccc@{}}
 		\toprule
 		& \multicolumn{3}{c}{\textbf{Meteorología observada}} & \multicolumn{3}{c}{\textbf{Pronóstico IFS}} \\
 		\cmidrule(lr){2-4} \cmidrule(l){5-7}
@@ -112,7 +112,7 @@ La tabla~\ref{tab:resultados_referencia} presenta las métricas de la energía d
 		Regresión lineal & 7,79 & 38,6 & $-0{,}80$ & 8,20 & 41,1 & $-0{,}52$ \\
 		SNAIVE & 9,14 & 48,2 & 0,66 & 9,15 & 48,2 & 0,71 \\
 		\bottomrule
-	\end{tabular}
+	\end{tabular*}
 \end{table}
 
 La figura~\ref{fig:referencia_mape} muestra el MAPE en función de la anticipación. Con la meteorología observada, el error de los modelos basados en árboles aumenta entre la anticipación~0 y la~1 y luego se mantiene casi constante, con un MAPE de LightGBM de 1,76\,\% en el día~0 y de 2,52\,\% en el día~14. Con el pronóstico de IFS, en cambio, el error crece en forma sostenida con la anticipación, desde 2,11\,\% hasta 7,79\,\%. La diferencia entre ambos escenarios muestra que, a partir de los primeros días, el error del pronóstico meteorológico supera al error propio del modelo de demanda y determina la evolución del error con el horizonte. Estos valores se ubican en el rango que documentaban las evaluaciones internas de CAMMESA, de aproximadamente 3\,\% para el día siguiente y 10\,\% para los horizontes más alejados, mencionadas en la sección~\ref{sec:estado_arte}.
@@ -146,10 +146,10 @@ La tabla~\ref{tab:resultados_profundos} presenta las métricas de la energía de
 	\centering
 	\caption{Métricas de la energía del MEM de los modelos de aprendizaje profundo y fundacionales, y tiempo medio de entrenamiento. MAPE y sesgo en \%, RMSE en GWh y tiempo en segundos.}
 	\label{tab:resultados_profundos}
-	\footnotesize
+	\small
 	\setlength{\tabcolsep}{4pt}
 	\renewcommand{\arraystretch}{1.15}
-	\begin{tabular}{@{}lcccccc@{}}
+	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lcccccc@{}}
 		\toprule
 		& \multicolumn{2}{c}{\textbf{Meteorología observada}} & \multicolumn{3}{c}{\textbf{Pronóstico IFS}} & \\
 		\cmidrule(lr){2-3} \cmidrule(lr){4-6}
@@ -166,7 +166,7 @@ La tabla~\ref{tab:resultados_profundos} presenta las métricas de la energía de
 		Chronos-2 sin ajuste & 3,55 & 18,9 & 4,98 & 27,3 & $-0{,}53$ & -- \\
 		SNAIVE & 9,14 & 48,2 & 8,99 & 47,5 & 0,71 & -- \\
 		\bottomrule
-	\end{tabular}
+	\end{tabular*}
 \end{table}
 
 Con la meteorología observada, todas las redes neuronales superaron al modelo de referencia, aunque TiDE quedó muy cerca. TSMixer obtuvo el menor error, con un MAPE de 1,63\,\%, un 29\,\% inferior al de LGBM\_OPT. Con el pronóstico de IFS, las diferencias se reducen: los modelos entrenados, salvo Chronos-2, se ubican entre 3,93\,\% y 4,22\,\%, porque el error del pronóstico meteorológico, común a todos, pasa a dominar. El ajuste de hiperparámetros de LightGBM produjo una mejora pequeña, de 2,39\,\% a 2,29\,\% con la meteorología observada y de 4,22\,\% a 4,14\,\% con IFS.
@@ -189,7 +189,7 @@ La figura~\ref{fig:profundos_sesgo} compara la distribución del error porcentua
 	\label{fig:profundos_sesgo}
 \end{figure}
 
-Chronos-2 obtuvo los mayores errores entre los modelos entrenados. El ajuste mediante LoRA redujo su MAPE de 3,55\,\% a 2,99\,\% con la meteorología observada, pero no alcanzó al modelo de referencia, con un costo de entrenamiento superior al de las redes recurrentes y TSMixer. TiDE tuvo un desempeño inferior a TSMixer, la otra arquitectura basada en perceptrones multicapa, y TFT obtuvo resultados cercanos a los de TSMixer con un tiempo de entrenamiento seis veces mayor. A partir de estos resultados, se mantuvieron para las etapas siguientes los modelos indicados en la sección~\ref{subsec:covariables_agregacion}.
+Chronos-2 obtuvo los mayores errores entre los modelos entrenados. El ajuste mediante LoRA redujo su MAPE de 3,55\,\% a 2,99\,\% con la meteorología observada, pero no alcanzó al modelo de referencia, con un costo de entrenamiento superior al de las redes recurrentes y TSMixer. TiDE tuvo un desempeño inferior a TSMixer, la otra arquitectura basada en perceptrones multicapa, y TFT obtuvo resultados cercanos a los de TSMixer con un tiempo de entrenamiento seis veces mayor. A partir de estos resultados, se mantuvieron para la etapa siguiente SNAIVE, LGBM\_OPT, GRU, LSTM, TSMixer y TFT, y se descartaron TiDE y Chronos-2.
 
 %----------------------------------------------------------------------------------------
 \subsection{Covariables, fuentes meteorológicas y nivel de agregación}
@@ -198,14 +198,20 @@ Chronos-2 obtuvo los mayores errores entre los modelos entrenados. El ajuste med
 
 La tabla~\ref{tab:resultados_g5} compara las configuraciones Regional G5, Regional G5A y MEM G5 en la energía del MEM. En esta etapa se incorporaron los ensambles.
 
+El resultado más importante a destacar, es que el pronóstico directo de la energía del MEM (MEM G5) resultó menos preciso que la suma de los pronósticos regionales en todos los modelos. Esto confirma una de las hipótesis que motivaron el proyecto, donde se propuso realizar pronósticos por región en lugar del total país de forma directa.
+
+Comparando estos dos grupos, TSMixer pasa de un MAPE de 1,57\,\% (suma regional) frente a 3,37\,\% (directo) con la meteorología observada, mientras que LSTM pasa de 1,82\,\%  a 2,83\,\%. Esto responde a que en el pronóstico directo disponen de una única serie para entrenar, en lugar de las diez series regionales del entrenamiento global. 
+
+Como conclusión, se determina que la energía del MEM se obtiene como suma de las regiones y se descarta el método de pronóstico directo de toda la demanda nacional.
+
 \begin{table}[H]
 	\centering
 	\caption{MAPE (\%) de la energía del MEM según la configuración, promedio de las anticipaciones 0 a 14. G5 y G5A corresponden a las configuraciones regionales.}
 	\label{tab:resultados_g5}
-	\footnotesize
+	\small
 	\setlength{\tabcolsep}{4pt}
 	\renewcommand{\arraystretch}{1.15}
-	\begin{tabular}{@{}lcccccc@{}}
+	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lcccccc@{}}
 		\toprule
 		& \multicolumn{3}{c}{\textbf{Meteorología observada}} & \multicolumn{3}{c}{\textbf{Pronóstico IFS}} \\
 		\cmidrule(lr){2-4} \cmidrule(l){5-7}
@@ -220,18 +226,16 @@ La tabla~\ref{tab:resultados_g5} compara las configuraciones Regional G5, Region
 		LGBM\_OPT & 2,29 & 2,20 & 2,64 & 4,59 & 4,83 & 4,80 \\
 		SNAIVE & 9,14 & 9,14 & 9,14 & 9,15 & 9,15 & 9,15 \\
 		\bottomrule
-	\end{tabular}
+	\end{tabular*}
 \end{table}
 
 Los ensambles mejoraron a los modelos individuales con la meteorología observada. ENS\_STACK obtuvo un MAPE de 1,42\,\%, inferior al 1,57\,\% de TSMixer, el mejor modelo individual. Con IFS, ENS\_PROM y ENS\_STACK quedaron cerca del mejor modelo individual, con 4,29\,\% y 4,39\,\%, ya que el error meteorológico afecta a todos los modelos de la misma forma y reduce el beneficio de combinarlos.
 
-La temperatura del aire produjo errores mayores que la temperatura aparente en casi todos los modelos. El MAPE de ENS\_STACK aumentó de 1,42\,\% a 1,63\,\% con la meteorología observada y de 4,39\,\% a 4,70\,\% con IFS. La temperatura aparente incorpora el efecto de la humedad y del viento sobre la sensación térmica, que influye en el uso de equipos de climatización. Por este motivo, se mantuvo como opción principal.
-
-El pronóstico directo de la energía del MEM resultó menos preciso que la suma de los pronósticos regionales en todos los modelos, con un MAPE de ENS\_STACK de 1,87\,\% frente a 1,42\,\% con la meteorología observada. Las diferencias fueron mayores en TSMixer y TFT, que en el pronóstico directo disponen de una única serie para entrenar, en lugar de las diez series regionales del entrenamiento global. Por lo tanto, la energía del MEM se obtiene como suma de las regiones.
+La temperatura del aire (G5A) produjo errores mayores que la temperatura aparente (G5) en casi todos los modelos. El MAPE de ENS\_STACK aumentó de 1,42\,\% a 1,63\,\% con la meteorología observada y de 4,39\,\% a 4,70\,\% con IFS. La temperatura aparente incorpora el efecto de la humedad y del viento sobre la sensación térmica, que influye en el uso de equipos de climatización. Por este motivo, se mantuvo como opción principal.
 
 \subsubsection{Grupos de pronósticos}
 
-La figura~\ref{fig:grupos_mape} compara el MAPE de ENS\_STACK en la configuración Regional G5A con el pronóstico de IFS y con los dos grupos de pronósticos de la tabla~\ref{tab:grupos_pronosticos}. Los grupos redujeron el MAPE promedio de 4,60\,\% con IFS a 4,06\,\% con TWC + IFS y a 4,09\,\% con SMN + TWC + IFS, sobre el mismo conjunto de fechas. La mejora se concentra en las anticipaciones mayores: en el día~14, el MAPE pasa de 7,57\,\% con IFS a 6,35\,\% con TWC + IFS. Con ambos grupos, la configuración Regional G5A superó también el resultado de Regional G5 con IFS, de 4,39\,\%. Es decir, la menor precisión de la temperatura del aire se compensa con la combinación de fuentes que esa variable permite.
+La figura~\ref{fig:grupos_mape} compara el MAPE de ENS\_STACK en la configuración Regional G5A con el pronóstico de IFS y con los dos grupos de pronósticos de la tabla~\ref{tab:grupos_pronosticos}. Los grupos redujeron el MAPE promedio de 4,60\,\% con IFS a 4,06\,\% con TWC + IFS y a 4,09\,\% con SMN + TWC + IFS, sobre el mismo conjunto de fechas. La mejora se concentra en las anticipaciones mayores: en el día~14, el MAPE pasa de 7,57\,\% con IFS a 6,35\,\% con TWC + IFS. Con ambos grupos, la configuración Regional G5A (temperatura del aire) superó también el resultado de Regional G5 (temperatura aparente) con IFS, de 4,39\,\%. Es decir, la mayor precisión de la temperatura del aire aportada por TWC tiene más peso que el aporte de la temperatura aparente.
 
 \begin{figure}[H]
 	\centering
@@ -248,16 +252,16 @@ La incorporación del EMAE produjo resultados dispares. Con la meteorología obs
 
 \subsubsection{Potencias del MEM y comparación con el modelo de producción}
 
-La tabla~\ref{tab:resultados_mem_g5} presenta las métricas de la configuración MEM G5 para las tres variables objetivo
+La tabla~\ref{tab:resultados_mem_g5} presenta las métricas de la configuración MEM G5 para las tres variables objetivo.
 
 \begin{table}[H]
 	\centering
 	\caption{MAPE (\%) de la configuración MEM G5 por variable objetivo, promedio de las anticipaciones 0 a 14.}
 	\label{tab:resultados_mem_g5}
-	\footnotesize
+	\small
 	\setlength{\tabcolsep}{4pt}
 	\renewcommand{\arraystretch}{1.15}
-	\begin{tabular}{@{}lcccccc@{}}
+	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lcccccc@{}}
 		\toprule
 		& \multicolumn{3}{c}{\textbf{Meteorología observada}} & \multicolumn{3}{c}{\textbf{Pronóstico IFS}} \\
 		\cmidrule(lr){2-4} \cmidrule(l){5-7}
@@ -273,17 +277,241 @@ La tabla~\ref{tab:resultados_mem_g5} presenta las métricas de la configuración
 		RLIN\_LEGACY & 6,08 & 5,91 & 5,35 & 7,41 & 7,51 & 6,44 \\
 		SNAIVE & 9,14 & 9,72 & 8,68 & 9,15 & 9,72 & 8,67 \\
 		\bottomrule
-	\end{tabular}
+	\end{tabular*}
 \end{table}
 
 ENS\_STACK obtuvo el menor error en las tres variables. La potencia pico resultó la variable más difícil de pronosticar, con un MAPE de 5,26\,\% con IFS, ya que corresponde a un valor horario extremo, mientras que la energía integra el comportamiento de todo el día. Respecto de RLIN\_LEGACY (la réplica de la regresión lineal utilizada en producción antes del trabajo), el MAPE con IFS se redujo un 30\,\% en la potencia pico y un 34\,\% en la potencia mínima. En la energía, la reducción alcanza el 41\,\% si se considera la suma de los pronósticos regionales de la configuración Regional G5, con un MAPE de 4,39\,\% frente a 7,41\,\%.
 
 %----------------------------------------------------------------------------------------
-% PENDIENTE: resultados de las etapas restantes y secciones siguientes
+\subsection{Representación de la respuesta a la temperatura}
+\label{subsec:resultados_temperatura}
 %----------------------------------------------------------------------------------------
-% 4.2.4 Representación de la respuesta a la temperatura (Regional G6, G6A, MEM G6, MEM G6A;
-%       LGBM_OPT_PESOS; días de alta demanda).
-% 4.2.5 Corrección y combinación de los pronósticos (MOS, híbridos, promedio de fuentes,
-%       corrección del sesgo reciente; resultado final para EN, PI y MI).
-% 4.3   Análisis de errores (días de alta demanda, estaciones del año, feriados, casos límite).
-% 4.4   Ensayos de integración del sistema (ejecución diaria, tiempos, monitoreo en Power BI).
+
+La tabla~\ref{tab:resultados_g6} compara las configuraciones Regional G5 y Regional G6 en la energía del MEM. Además del promedio de todos los días, se presenta el MAPE en los días de alta demanda definidos en la sección~\ref{subsec:condiciones_comparacion}. En la configuración Regional G5, los ensambles incluyen también a GRU.
+
+\begin{table}[H]
+	\centering
+	\caption{MAPE (\%) de la energía del MEM de las configuraciones Regional G5 y Regional G6, promedio de las anticipaciones 0 a 14.}
+	\label{tab:resultados_g6}
+	\small
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lcccccc@{}}
+		\toprule
+		& \multicolumn{2}{c}{\textbf{Meteorología observada}} & \multicolumn{2}{c}{\textbf{Pronóstico IFS}} & \multicolumn{2}{c}{\textbf{Alta demanda, IFS}} \\
+		\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(l){6-7}
+		\textbf{Modelo} & \textbf{G5} & \textbf{G6} & \textbf{G5} & \textbf{G6} & \textbf{G5} & \textbf{G6} \\
+		\midrule
+		ENS\_STACK & 1,42 & 1,36 & 4,39 & 4,46 & 5,88 & 5,82 \\
+		ENS\_PROM & 1,51 & 1,63 & 4,29 & 4,31 & 5,43 & 5,60 \\
+		TSMixer & 1,57 & 1,89 & 4,33 & 4,50 & 5,42 & 5,63 \\
+		LSTM & 1,82 & 1,76 & 4,43 & 4,38 & 5,27 & 5,37 \\
+		LGBM\_OPT & 2,29 & 2,19 & 4,59 & 4,54 & 6,17 & 6,22 \\
+		LGBM\_OPT\_PESOS & -- & 2,15 & -- & 4,53 & -- & 5,99 \\
+		\bottomrule
+	\end{tabular*}
+\end{table}
+
+El grupo G6 no produjo una mejora consistente. Con la meteorología observada, el MAPE se redujo en LGBM\_OPT, LSTM y ENS\_STACK, que pasó de 1,42\,\% a 1,36\,\%, pero aumentó en TSMixer, de 1,57\,\% a 1,89\,\%, y en ENS\_PROM. Con IFS, las diferencias no superaron 0,2 puntos porcentuales, en ambos sentidos. El efecto más claro se observó en los días de alta demanda con la meteorología observada, en los que el MAPE de ENS\_STACK se redujo de 1,47\,\% a 1,32\,\% y su sesgo, de $-1{,}10$\,\% a $-0{,}50$\,\%. Con IFS, en cambio, la subestimación de esos días se mantuvo entre el 4\,\% y el 5\,\% en ambos grupos, ya que depende principalmente del error del pronóstico de temperatura.
+
+Con la temperatura del aire, G6A mejoró a G5A en todos los modelos con el grupo TWC + IFS, entre 0,08 y 0,15 puntos porcentuales. El MAPE de ENS\_STACK pasó de 4,16\,\% a 4,05\,\%, y el de ENS\_PROM, de 4,31\,\% a 4,17\,\%. En los modelos del MEM, los resultados fueron dispares. Con IFS, el MAPE de ENS\_STACK en la potencia pico fue de 5,26\,\% con G5 y con G6, mientras que en la potencia mínima aumentó de 4,27\,\% a 4,46\,\%.
+
+La ponderación de LGBM\_OPT\_PESOS redujo el error de LightGBM en los días de alta demanda, de 2,82\,\% a 2,63\,\% con la meteorología observada y de 6,22\,\% a 5,99\,\% con IFS, con un efecto despreciable en el promedio. En la cadena completa de la sección siguiente, su MAPE en la energía fue de 4,01\,\%, frente a 3,99\,\% de LGBM\_OPT, por lo que no se incorporó a la configuración productiva.
+
+A partir de estos resultados, se adoptaron los grupos G6 y G6A. Sus diferencias promedio respecto de G5 y G5A fueron pequeñas, salvo en la potencia mínima, y mejoraron el grupo de pronósticos TWC + IFS y los días de alta demanda con la meteorología observada. La subestimación de esos días con el pronóstico meteorológico motivó las correcciones de la etapa siguiente.
+
+%----------------------------------------------------------------------------------------
+\subsection{Corrección y combinación de los pronósticos}
+\label{subsec:resultados_postproceso}
+%----------------------------------------------------------------------------------------
+
+La tabla~\ref{tab:resultados_postproceso} presenta el efecto acumulado de cada corrección sobre ENS\_PROM en las tres variables del MEM. Todas las filas se calcularon sobre el mismo conjunto de fechas de cálculo y anticipaciones, en el que están disponibles IFS y el grupo TWC + IFS. En la energía se presenta, además, el MAPE de las anticipaciones 0 y 1 y de las anticipaciones 7 a 14.
+
+\begin{table}[H]
+	\centering
+	\caption{MAPE (\%) de ENS\_PROM en el MEM según las correcciones aplicadas, promedio de las anticipaciones 0 a 14. Cada fila incorpora la corrección indicada a las anteriores.}
+	\label{tab:resultados_postproceso}
+	\small
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccc@{}}
+		\toprule
+		& \multicolumn{3}{c}{\textbf{Energía}} & & \\
+		\cmidrule(lr){2-4}
+		\textbf{Pronóstico} & \textbf{0 a 14} & \textbf{0 y 1} & \textbf{7 a 14} & \textbf{PI} & \textbf{MI} \\
+		\midrule
+		IFS & 4,31 & 1,87 & 5,83 & 5,40 & 4,40 \\
+		IFS corregido & 4,49 & 1,82 & 6,19 & 5,61 & 4,52 \\
+		IFS híbrido & 4,30 & 1,82 & 5,83 & 5,46 & 4,38 \\
+		TWC + IFS híbrido & 4,02 & 1,66 & 5,42 & 5,50 & 4,05 \\
+		Promedio de IFS y TWC + IFS & 3,89 & 1,64 & 5,25 & 5,17 & 3,97 \\
+		Promedio con ICON corregido & 3,88 & 1,64 & 5,25 & 5,14 & 3,97 \\
+		Corrección del sesgo reciente & 3,77 & 1,43 & 5,19 & 4,51 & 3,71 \\
+		\bottomrule
+	\end{tabular*}
+\end{table}
+
+La corrección de las temperaturas mejoró las primeras anticipaciones y empeoró las últimas. En la energía, el MAPE de las anticipaciones 0 y 1 se redujo de 1,87\,\% a 1,82\,\%, mientras que el de las anticipaciones 7 a 14 aumentó de 5,83\,\% a 6,19\,\%. El pronóstico híbrido conservó la mejora de los primeros días sin el deterioro de los últimos. En el grupo TWC + IFS, el efecto del híbrido fue mayor, con una reducción del MAPE de las anticipaciones 0 y 1 de 2,05\,\% a 1,66\,\%.
+
+El promedio de IFS y TWC + IFS redujo el MAPE de la energía a 3,89\,\%, inferior al de cada grupo por separado, ya que los errores de las fuentes se compensan parcialmente. En la potencia pico, TWC + IFS obtuvo un error mayor que IFS, pero el promedio de ambos mejoró a los dos. La incorporación de ICON corregido en las anticipaciones 0 a 6 tuvo un efecto menor.
+
+La corrección del sesgo reciente produjo la mayor mejora en la potencia pico, cuyo MAPE se redujo de 5,14\,\% a 4,51\,\% y cuyo sesgo pasó de $-2{,}62$\,\% a $-0{,}49$\,\%. En la potencia mínima, el MAPE se redujo de 3,97\,\% a 3,71\,\%, y en la energía, de 3,88\,\% a 3,77\,\%, con la mejora concentrada en las primeras anticipaciones. La corrección condicional obtuvo un MAPE de 3,78\,\%, 4,48\,\% y 3,72\,\% en la energía, la potencia pico y la potencia mínima, por lo que no se incorporó.
+
+Con la cadena completa, ENS\_PROM superó levemente a ENS\_STACK, que obtuvo un MAPE de 3,84\,\%, 4,54\,\% y 3,75\,\% en las tres variables. Este resultado difiere del obtenido con la meteorología observada, en el que ENS\_STACK era el mejor ensamble (tabla~\ref{tab:resultados_g5}). Dado que ENS\_PROM no requiere ajustar pesos ni acumular historia para cada grupo de pronósticos, se adoptó como ensamble de producción.
+
+La configuración productiva introdujo dos cambios respecto de la evaluada: el híbrido se construye en la entrada de los modelos, y no como combinación de sus predicciones, y la temperatura mínima del día~0 del grupo TWC + IFS se toma del SMN. Con los modelos de esta etapa, la cadena productiva obtuvo un MAPE de 3,78\,\%, 4,51\,\% y 3,72\,\%, equivalente al de la tabla~\ref{tab:resultados_postproceso}. Los resultados del resto del capítulo corresponden a esa cadena, denominada pronóstico publicado.
+
+La tabla~\ref{tab:resultados_final} compara el pronóstico publicado con los modelos de referencia de las etapas anteriores, sobre el mismo conjunto de fechas de cálculo y anticipaciones. Respecto de RLIN\_LEGACY, el MAPE se redujo un 49\,\% en la energía, un 40\,\% en la potencia pico y un 42\,\% en la potencia mínima. Respecto de LGBM\_OPT con G5 e IFS, la reducción fue de entre el 18\,\% y el 19\,\% en las tres variables.
+
+\begin{table}[H]
+	\centering
+	\caption{MAPE (\%) del pronóstico publicado y de los modelos de referencia en el MEM, promedio de las anticipaciones 0 a 14.}
+	\label{tab:resultados_final}
+	\small
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccc@{}}
+		\toprule
+		\textbf{Pronóstico} & \textbf{EN} & \textbf{PI} & \textbf{MI} \\
+		\midrule
+		Pronóstico publicado & 3,77 & 4,51 & 3,71 \\
+		ENS\_STACK, G5 con IFS & 4,39 & 5,27 & 4,27 \\
+		LGBM\_OPT, G5 con IFS & 4,59 & 5,47 & 4,57 \\
+		RLIN\_LEGACY con IFS & 7,41 & 7,51 & 6,44 \\
+		SNAIVE & 9,15 & 9,73 & 8,68 \\
+		\bottomrule
+	\end{tabular*}
+\end{table}
+
+%----------------------------------------------------------------------------------------
+\subsection{Comparación con los pronósticos operativos}
+\label{subsec:comparacion_operativa}
+%----------------------------------------------------------------------------------------
+
+RLIN\_LEGACY reproduce la regresión del proceso anterior con los pronósticos de IFS. Para medir la mejora en las condiciones reales de operación, el pronóstico publicado se comparó también con los pronósticos que el proceso anterior generó durante el período de prueba, almacenados en el esquema \code{MODELOS}. Ese proceso incluye la regresión lineal, seis variantes de XGBoost, SARIMAX y, para la energía, una red LSTM. Sus pronósticos cubren las anticipaciones 1 a 13 y no todas las fechas de cálculo, por lo que la comparación se restringió a las 235 fechas de cálculo comunes. La tabla~\ref{tab:resultados_legacy} presenta los resultados. De las variantes de XGBoost se incluye la de menor error, que fue la misma en las tres variables.
+
+\begin{table}[H]
+	\centering
+	\caption{MAPE (\%) del pronóstico publicado y de los pronósticos del proceso anterior en el MEM, promedio de las anticipaciones 1 a 13 y anticipación~1.}
+	\label{tab:resultados_legacy}
+	\small
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lcccccc@{}}
+		\toprule
+		& \multicolumn{2}{c}{\textbf{EN}} & \multicolumn{2}{c}{\textbf{PI}} & \multicolumn{2}{c}{\textbf{MI}} \\
+		\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(l){6-7}
+		\textbf{Pronóstico} & \textbf{1 a 13} & \textbf{1} & \textbf{1 a 13} & \textbf{1} & \textbf{1 a 13} & \textbf{1} \\
+		\midrule
+		Pronóstico publicado & 3,67 & 1,55 & 4,38 & 2,04 & 3,56 & 1,89 \\
+		Regresión lineal & 4,83 & 2,62 & 5,24 & 3,17 & 5,14 & 3,47 \\
+		XGBoost 06 & 5,14 & 2,89 & 5,50 & 3,25 & 5,10 & 3,49 \\
+		SARIMAX & 6,14 & 3,40 & 5,75 & 3,42 & 6,16 & 4,63 \\
+		LSTM & 6,55 & 4,09 & -- & -- & -- & -- \\
+		\bottomrule
+	\end{tabular*}
+\end{table}
+
+El pronóstico publicado obtuvo el menor error en las tres variables. Respecto de la regresión lineal, el mejor modelo del proceso anterior en la energía y en la potencia pico, el MAPE se redujo un 24\,\% en la energía, un 16\,\% en la potencia pico y un 31\,\% en la potencia mínima. La reducción es mayor en la anticipación~1, que corresponde a la programación diaria, con un 41\,\%, un 36\,\% y un 46\,\%, respectivamente. La figura~\ref{fig:legacy_mape} muestra que la diferencia se mantiene en todo el horizonte. El error de la regresión del proceso anterior es menor que el de RLIN\_LEGACY porque se calcula sobre otro conjunto de fechas y anticipaciones, y con los datos de entrada que ese proceso utilizó en cada fecha de cálculo.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{./Figures/cap4_legacy_mape.pdf}
+	\caption{MAPE por anticipación del pronóstico publicado y de la regresión lineal del proceso anterior en el MEM.}
+	\label{fig:legacy_mape}
+\end{figure}
+
+Los modelos del proceso anterior también subestimaban la demanda. El sesgo de la regresión lineal en la energía fue de $-2{,}94$\,\%, frente a $-0{,}63$\,\% del pronóstico publicado, y en los días de alta demanda su MAPE fue de 7,34\,\%, frente a 4,99\,\%.
+
+Por último, se comparó el pronóstico publicado con la previsión de la Programación Semanal emitida en la misma fecha de cálculo. Esa previsión incluye el consumo de las acerías, por lo que se le descontó el consumo previsto en el sistema. Su error incluye, por lo tanto, las diferencias en la estimación de ese consumo. Sobre las 50 publicaciones del período de prueba, con anticipaciones de 3 a 12 días, el MAPE del pronóstico publicado fue de 3,51\,\% en la energía y de 4,22\,\% en la potencia pico, frente a 4,95\,\% y 5,69\,\% de la Programación Semanal.
+
+%----------------------------------------------------------------------------------------
+\section{Análisis de errores}
+\label{sec:analisis_errores}
+%----------------------------------------------------------------------------------------
+
+En esta sección se analizan los errores del pronóstico publicado en el período de prueba, según la anticipación, la época del año y el tipo de día. Se analizan, además, los días con mayores errores, los días de alta demanda y la cobertura de las bandas de error.
+
+\subsection{Anticipación y época del año}
+
+El error crece con la anticipación en las tres variables. En la energía, el MAPE pasa de 1,24\,\% en el día~0 a 6,55\,\% en el día~14, y el intervalo entre los percentiles 5 y 95 del error porcentual, de $\pm 2{,}6$\,\% a $\pm 14{,}1$\,\%. El sesgo es levemente negativo en todo el horizonte, entre $-0{,}03$\,\% en el día~0 y $-0{,}93$\,\% en el día~14, por lo que la corrección del sesgo reciente, estimada con la anticipación~0, no elimina por completo la subestimación de los días más alejados.
+
+La figura~\ref{fig:mape_mensual} presenta el MAPE de la energía del MEM por mes del día pronosticado. El error es mayor entre diciembre y marzo, cuando la demanda depende en mayor medida de la temperatura. En las anticipaciones 7 a 14, el MAPE superó el 6,5\,\% en esos cuatro meses, con un máximo de 8,18\,\% en enero, mientras que entre abril y junio se ubicó entre el 2,8\,\% y el 4,1\,\%. En los meses de verano, de octubre a marzo, el sesgo fue de $-1{,}18$\,\%, y en los de invierno, de 0,12\,\%. En las anticipaciones 0 y 1, en cambio, el error se mantuvo por debajo del 2,1\,\% en todos los meses.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{./Figures/cap4_mape_mensual.pdf}
+	\caption{MAPE mensual del pronóstico publicado de la energía del MEM según el tramo de anticipación.}
+	\label{fig:mape_mensual}
+\end{figure}
+
+\subsection{Tipo de día}
+
+Los feriados presentan los mayores errores en las primeras anticipaciones. En la energía, el MAPE de las anticipaciones 0 y 1 fue de 2,36\,\% en los 18 feriados del período, incluidas las jornadas de actividad reducida, frente a 1,30\,\% en los días hábiles. Los días hábiles anteriores o posteriores a un feriado alcanzaron 1,85\,\%, y los sábados y domingos, 1,44\,\% y 1,56\,\%. En la potencia pico, la diferencia es mayor, con 3,73\,\% en los feriados frente a 1,84\,\% en los días hábiles.
+
+Los dos mayores errores de la anticipación~1 en la energía correspondieron al 01/01/2026 y al 25/12/2025, con una sobreestimación de 9,4\,\% y 9,3\,\%. Con la meteorología observada, ENS\_PROM sobreestimó esos días en 6,7\,\% y 9,9\,\%, por lo que el error proviene del modelo de demanda y no del pronóstico meteorológico. Se trata de feriados con un comportamiento propio, de los que la historia de entrenamiento contiene solo cuatro o cinco casos.
+
+\subsection{Mayores errores}
+
+Para identificar el origen de los mayores errores, se compararon con los del ensamble ENS\_PROM con la meteorología observada en las mismas fechas. En la anticipación~1, el 10\,\% de los días con mayor error tuvo un MAPE de 4,73\,\%, que se reduce a 2,59\,\% con la meteorología observada. En la anticipación~7, ese decil alcanzó 11,23\,\%, frente a 2,04\,\% con la meteorología observada. Por lo tanto, en los horizontes mayores los errores elevados provienen casi por completo del pronóstico meteorológico. El caso más extremo fue el 07/02/2026, que el pronóstico de anticipación~7 sobreestimó en 21,9\,\%, mientras que con la meteorología observada el error fue de $-3{,}0$\,\%. El 83\,\% de los días de ese decil pertenecen a los meses de diciembre a marzo.
+
+\subsection{Días de alta demanda y alertas}
+
+En los días de alta demanda, el pronóstico publicado mantiene una subestimación sistemática. En la energía, su MAPE en esos días fue de 5,10\,\% y su sesgo de $-4{,}15$\,\%. En la potencia pico, los valores fueron de 5,57\,\% y $-4{,}48$\,\%, y en la potencia mínima, de 5,50\,\% y $-4{,}28$\,\%. Esta subestimación motivó las alertas de alta demanda descritas en la sección~\ref{subsec:alertas_alta_demanda}.
+
+La tabla~\ref{tab:resultados_alertas} evalúa las alertas del MEM en el período de prueba. Los umbrales corresponden al percentil 95 de cada estación (verano e invierno), por lo que los casos de alta demanda son los días que lo superaron: 19 días en la energía y 21 en la potencia pico. Cada caso se evalúa en todas las anticipaciones en las que fue pronosticado. La detección es la proporción de casos alertados, y los aciertos, la proporción de alertas que correspondieron a un caso de alta demanda. Como referencia, se incluye la regla que alerta cuando el pronóstico publicado supera el umbral.
+
+\begin{table}[H]
+	\centering
+	\caption{Detección y aciertos (\%) de las alertas de alta demanda del MEM en el período de prueba.}
+	\label{tab:resultados_alertas}
+	\small
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lcccc@{}}
+		\toprule
+		& \multicolumn{2}{c}{\textbf{Energía}} & \multicolumn{2}{c}{\textbf{Potencia pico}} \\
+		\cmidrule(lr){2-3} \cmidrule(l){4-5}
+		\textbf{Regla} & \textbf{Detección} & \textbf{Aciertos} & \textbf{Detección} & \textbf{Aciertos} \\
+		\midrule
+		Pronóstico mayor que el umbral & 60 & 75 & 63 & 78 \\
+		Alta demanda probable & 79 & 60 & 83 & 60 \\
+		Alta demanda probable o posible & 89 & 44 & 91 & 45 \\
+		\bottomrule
+	\end{tabular*}
+\end{table}
+
+La alerta de alta demanda probable detectó el 79\,\% de los casos de la energía, frente al 60\,\% de la regla de referencia, y seis de cada diez alertas se cumplieron. En las anticipaciones 0 a 6, la detección alcanzó el 90\,\%, con un 65\,\% de aciertos. El nivel posible eleva la detección al 89\,\% a costa de reducir los aciertos al 44\,\%, por lo que señala días que requieren seguimiento. En el período de prueba no se superaron los récords históricos. La alerta de récord se emitió en 12 combinaciones de fecha de cálculo y anticipación en la energía y en 46 en la potencia pico, ninguna de las cuales se cumplió.
+
+\subsection{Bandas de error}
+
+La cobertura de la banda entre los percentiles 5 y 95, cuyo valor nominal es del 90\,\%, fue del 84\,\% en las anticipaciones 0 y 1, del 82\,\% en las anticipaciones 2 a 6 y del 79\,\% en las anticipaciones 7 a 14 en la energía, con valores similares en las potencias. La cobertura real es inferior a la nominal porque los errores se agrupan en rachas, como las olas de calor, en las que los errores de los 60 días anteriores no representan los del período. Por el mismo motivo, la cobertura es menor en verano, con un 76\,\% en las anticipaciones 7 a 14, que en invierno, con un 82\,\%. El ancho medio de la banda de la energía es de $\pm 2{,}9$\,\% en las anticipaciones 0 y 1 y de $\pm 10{,}4$\,\% en las anticipaciones 7 a 14.
+
+%----------------------------------------------------------------------------------------
+\section{Ensayos de integración del sistema}
+\label{sec:ensayos_integracion}
+%----------------------------------------------------------------------------------------
+
+Los ensayos de integración verificaron que el sistema en producción reproduce los resultados de la evaluación y opera en forma automática con los datos reales. Se realizaron en tres etapas: la verificación del módulo con los modelos de la evaluación, una marcha blanca con esos modelos y la ejecución con los modelos registrados en MLflow.
+
+\subsection{Verificación del módulo y carga de la historia}
+
+El módulo \code{pronodem-idp} incluye pruebas unitarias de los grados-día, de la corrección de los pronósticos meteorológicos, de las reglas de los grupos de pronósticos, del promedio de grupos, de la corrección del sesgo y de las bandas, construidas con casos verificables. Incluye, además, pruebas de paridad que comparan sus predicciones con las de los notebooks de desarrollo para los modelos guardados de cada reentrenamiento mensual.
+
+Con esos modelos se generó la historia de pronósticos desde el 01/09/2025 hasta el 11/10/2026, con 2\,238\,912 registros en la tabla de resultados, identificados con la versión \code{BACKTEST}. Las métricas calculadas desde la vista de errores fueron equivalentes a las de la sección~\ref{subsec:resultados_postproceso}. El notebook diario, ejecutado para el 11/10/2026, generó la misma cantidad de registros y las mismas alertas que la historia, con una diferencia media en los valores de 0,0002\,\%.
+
+\subsection{Marcha blanca y ejecución diaria}
+
+Entre el 12/10/2026 y el 19/10/2026, el notebook de pronóstico se ejecutó con los modelos mensuales de la evaluación, almacenados en el lakehouse. Desde el 20/10/2026 utiliza los modelos registrados en MLflow, y desde el 22/10/2026 se ejecuta en forma automática con \code{PPLN\_DIARIO}. Cada fecha de cálculo genera 6\,241 registros, que corresponden a los modelos base, a ENS\_PROM de cada grupo de pronósticos y al pronóstico publicado. En todas las fechas, los cinco grupos de pronósticos estuvieron completos, sin necesidad de recurrir a las fuentes alternativas.
+
+En las ejecuciones programadas, los resultados se escribieron entre las 08:47 y las 08:48, unos 17 minutos después del inicio de \code{PPLN\_DIARIO}, que incluye los 10 minutos de espera previos a \code{PPLN\_METEO}. \textbf{[PENDIENTE: duración de \code{NB\_MODELOS\_PRONOSTICO} y de cada pipeline, según el monitor de Fabric.]}
+
+La carga de la Programación Semanal incorporó las 60 publicaciones desde el 21/08/2025, y la ejecución diaria agrega las nuevas publicaciones a medida que están disponibles.
+
+\subsection{Reentrenamiento}
+
+El reentrenamiento se ensayó en Fabric, sin GPU, con datos hasta el 18/10/2026. La lectura de los datos demoró entre 30 y 32 segundos. El entrenamiento de LightGBM para la potencia pico del MEM demoró 1 segundo; el de TSMixer para la misma variable, 20 segundos, y el de TSMixer para la energía regional, el modelo de mayor costo, 335 segundos. Los tres modelos superaron el control y obtuvieron, en los últimos 28 días, un MAPE con la meteorología observada inferior al de los modelos mensuales vigentes: 0,95\,\% frente a 1,84\,\%, 1,38\,\% frente a 2,28\,\% y 2,35\,\% frente a 2,99\,\%, respectivamente. \textbf{[PENDIENTE: duración del primer reentrenamiento semanal completo, con los 24 modelos.]}
+
+\subsection{Primeros resultados en producción}
+
+Entre el 12/10/2026 y el 23/10/2026, el pronóstico publicado obtuvo un MAPE de 1,09\,\% en la energía, 1,77\,\% en la potencia pico y 1,77\,\% en la potencia mínima del MEM, con una cobertura de la banda del 95\,\% en la energía. En las 44 combinaciones de fecha de cálculo y anticipación en las que también se dispone del proceso anterior, el MAPE de la energía fue de 1,12\,\%, frente a 1,41\,\% de la regresión lineal, y el de la potencia pico, de 1,81\,\%, frente a 1,95\,\%. En la potencia mínima, en cambio, la mejor variante de XGBoost obtuvo 1,55\,\%, frente a 1,84\,\%. Estos valores son inferiores a los del período de prueba porque corresponden a solo 12 días de octubre, un mes con errores bajos, por lo que no son representativos del desempeño anual.

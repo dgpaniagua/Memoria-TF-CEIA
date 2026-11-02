@@ -28,6 +28,8 @@ La variable principal proviene de los registros de demanda del Sistema Operativo
 
 La información meteorológica proviene de tres fuentes. El Servicio Meteorológico Nacional (SMN) publica observaciones y pronósticos en archivos de texto \cite{datosabiertosSMN}. Sus datos son prioritarios por su carácter oficial, pero sus pronósticos alcanzan solo siete días. Open-Meteo ofrece, mediante una API consultada por coordenadas, datos históricos y pronósticos de distintos modelos numéricos, con variables como temperatura, temperatura aparente, humedad, viento, nubosidad y radiación solar \cite{openMeteoHistorical,openMeteoForecast}. The Weather Channel \cite{weatherWeb}, consultado habitualmente por el área de Programación Semanal y Diaria, provee pronósticos con un horizonte de 15 días.
 
+Como referencia de comparación se utilizó, además, la previsión de demanda que CAMMESA publica cada semana como parte de la Programación Semanal, con la energía y la potencia pico previstas del MEM para cada día de la semana programada.
+
 \begin{table}[H]
 	\centering
 	\caption{Fuentes de datos utilizadas en el trabajo.}
@@ -51,6 +53,7 @@ La información meteorológica proviene de tres fuentes. El Servicio Meteorológ
 		SMN & Observaciones y pronósticos meteorológicos. & Horaria y diaria; estaciones argentinas. & Datos abiertos con atribución. \\
 		Open-Meteo & Observaciones y pronósticos meteorológicos. & Horaria; por coordenadas geográficas. & Condiciones de uso de la API. \\
 		The Weather Channel & Pronósticos meteorológicos. & Horaria y diaria; ubicaciones seleccionadas. & Servicio de terceros. \\
+		Programación Semanal & Previsión de energía y potencia pico del MEM. & Diaria; publicación semanal. & Publicación de CAMMESA. \\
 		\bottomrule
 	\end{tabularx}
 \end{table}
@@ -82,8 +85,8 @@ Los modelos evaluados estiman los valores futuros de la variable objetivo a part
 		\midrule
 		Regresión lineal & Aprendizaje automático & Combinación lineal de las variables explicativas. & Futuras y pasadas. \\
 		Random Forest \cite{breiman2001randomforest} & Aprendizaje automático & Promedio de árboles entrenados sobre muestras aleatorias. & Futuras y pasadas. \\
-		XGBoost \cite{chen2016xgboost} & Aprendizaje automático & \textit{Gradient boosting} con regularización de los árboles. & Futuras y pasadas. \\
-		LightGBM \cite{ke2017lightgbm} & Aprendizaje automático & \textit{Gradient boosting} con histogramas y crecimiento por hojas. & Futuras y pasadas. \\
+		XGBoost \cite{chen2016xgboost} & Aprendizaje automático & Gradient Boosting \cite{friedman2001gbm} con regularización de los árboles. & Futuras y pasadas. \\
+		LightGBM \cite{ke2017lightgbm} & Aprendizaje automático & Gradient Boosting con histogramas y crecimiento por hojas. & Futuras y pasadas. \\
 		LSTM \cite{hochreiter1997lstm} & Red recurrente & Celda de memoria con compuertas de entrada, olvido y salida. & Futuras \\
 		GRU \cite{cho2014gru} & Red recurrente & Compuertas de actualización y de reinicio. & Futuras \\
 		TFT \cite{lim2021tft} & Múltiples pasos & Selección de variables, codificador recurrente y atención multicabezal. & Estáticas, pasadas y futuras. \\
@@ -97,7 +100,7 @@ Los modelos evaluados estiman los valores futuros de la variable objetivo a part
 \subsection{Algoritmos de aprendizaje automático}
 \label{subsec:modelos_ml}
 
-La regresión lineal es interpretable y permite modelar relaciones lineales entre las variables. Para representar relaciones no lineales, como la respuesta de la demanda a la temperatura, es necesario incorporar transformaciones de las variables. Los demás algoritmos combinan árboles de decisión. Random Forest promedia árboles entrenados sobre muestras aleatorias para reducir la varianza, mientras que el \textit{gradient boosting} \cite{friedman2001gbm} agrega árboles en forma secuencial, de modo que cada uno corrige los errores de los anteriores. XGBoost y LightGBM son implementaciones eficientes de este esquema. Sus principales hiperparámetros son la cantidad de árboles, la tasa de aprendizaje, la cantidad de hojas, el mínimo de observaciones por hoja, las fracciones de observaciones y de variables de cada árbol, y la regularización. Los modelos basados en árboles representan relaciones no lineales sin transformaciones previas, pero no extrapolan fuera del rango observado en el entrenamiento y requieren que la historia se presente como rezagos explícitos.
+La regresión lineal es interpretable y permite modelar relaciones lineales entre las variables. Para representar relaciones no lineales, como la respuesta de la demanda a la temperatura, es necesario incorporar transformaciones de las variables. Los demás algoritmos combinan árboles de decisión. Random Forest \cite{breiman2001randomforest} promedia árboles entrenados sobre muestras aleatorias para reducir la varianza, mientras que el Gradient Boosting \cite{friedman2001gbm} agrega árboles en forma secuencial, de modo que cada uno corrige los errores de los anteriores. XGBoost \cite{chen2016xgboost} y LightGBM \cite{ke2017lightgbm} son implementaciones eficientes de este esquema. Sus principales hiperparámetros son la cantidad de árboles, la tasa de aprendizaje, la cantidad de hojas, el mínimo de observaciones por hoja, las fracciones de observaciones y de variables de cada árbol, y la regularización. Los modelos basados en árboles representan relaciones no lineales sin transformaciones previas, pero no extrapolan fuera del rango observado en el entrenamiento y requieren que la historia se presente como rezagos explícitos.
 
 \subsection{Redes neuronales}
 \label{subsec:modelos_rnn}
@@ -141,6 +144,6 @@ Los pronósticos de los modelos numéricos presentan, además, errores sistemát
 
 La infraestructura combinó Microsoft Fabric, que concentró el almacenamiento, el procesamiento, la experimentación y la visualización, con un servidor local de CAMMESA para los procesos que requerían conectividad con sistemas internos. Esta distribución respondió a restricciones de acceso y a la conveniencia de utilizar la plataforma institucional.
 
-En Fabric, una base de datos KQL \cite{microsoftFabricKQL}, orientada al análisis de datos temporales, actuó como capa inicial para recibir la información con una elaboración mínima. Un warehouse \cite{microsoftFabricWarehouse} alojó las capas de datos normalizados e integrados, mediante tablas y vistas T-SQL, y un lakehouse \cite{microsoftFabricLakehouse} almacenó los archivos auxiliares. Los notebooks proporcionaron los entornos de ejecución de Python y PySpark, y los pipelines \cite{microsoftFabricPipeline} orquestaron notebooks, consultas y copias de datos. El acceso a las bases Oracle internas se realizó mediante una puerta de enlace de datos, que evita exponerlas a la red externa. El servidor local ejecutó Dagster y las bibliotecas de acceso a PI System, y escribió los resultados en el warehouse mediante autenticación de Azure.
+En Fabric, una base de datos KQL \cite{microsoftFabricKQL}, orientada al análisis de datos temporales, actuó como capa inicial para recibir la información con una elaboración mínima. Un warehouse \cite{microsoftFabricWarehouse} alojó las capas de datos normalizados e integrados, mediante tablas y vistas T-SQL, y un lakehouse \cite{microsoftFabricLakehouse} almacenó los archivos auxiliares. Los notebooks proporcionaron los entornos de ejecución de Python y PySpark, y los pipelines \cite{microsoftFabricPipeline} orquestaron notebooks, consultas y copias de datos. El acceso a las bases Oracle internas se realizó mediante una puerta de enlace de datos, que evita exponerlas a la red externa. El servidor local ejecutó Dagster y las bibliotecas de acceso a PI System, y escribió los resultados en el warehouse mediante autenticación de Azure. El código de producción se mantuvo en un repositorio del servidor GitLab de la empresa, cuya integración continua publica cada versión como un paquete de Python que se instala en un entorno de Fabric.
 
 La experimentación con los modelos se realizó en Google Colab \cite{googleColab}, principalmente con GPU NVIDIA L4 para las redes neuronales y con entornos sin GPU para los algoritmos basados en árboles y la búsqueda de hiperparámetros. Los datos se exportaron desde el warehouse a archivos cargados en el entorno de ejecución. El diseño de los flujos y los mecanismos de ejecución se desarrollan en el capítulo~\ref{Chapter3}.

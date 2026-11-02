@@ -4,7 +4,7 @@
 
 \label{AppendixA}
 
-En este apéndice se describen las tablas y vistas del warehouse \code{WH\_PSYD} que intervienen en el pipeline de datos presentado en la sección~\ref{sec:pipeline_datos}. Se detallan los esquemas DEMANDA, METEO y PRONOS, junto con las dimensiones que los vinculan, y el esquema MODELOS, que almacena los resultados de los modelos en producción. Para cada objeto se indican la capa a la que pertenece, su clave y su contenido. Las variables comunes a varias tablas se describen una única vez.
+En este apéndice se describen las tablas y vistas del warehouse \code{WH\_PSYD} que intervienen en el pipeline de datos presentado en la sección~\ref{sec:pipeline_datos}. Se detallan los esquemas DEMANDA, METEO y PRONOS, junto con las dimensiones que los vinculan, y el esquema MODELOS, que contiene la configuración y los resultados de los modelos en producción, junto con los objetos que la puesta en producción incorporó en los demás esquemas. Para cada objeto se indican la capa a la que pertenece, su clave y su contenido. Las variables comunes a varias tablas se describen una única vez.
 
 %----------------------------------------------------------------------------------------
 \section{Relaciones entre esquemas}
@@ -311,7 +311,7 @@ Las variables meteorológicas de estas tablas son las descritas en las tablas~\r
 \label{sec:apendice_modelos}
 %----------------------------------------------------------------------------------------
 
-El esquema MODELOS contiene el catálogo de modelos y de escenarios meteorológicos de producción, los pronósticos generados y los errores calculados a medida que se conocen los valores reales. La tabla~\ref{tab:esquema_modelos} describe sus objetos. Los escenarios se definen mediante reglas que indican, para cada variable meteorológica y rango de anticipaciones, la fuente utilizada y si se aplica la corrección del sesgo, por lo que un nuevo grupo de pronósticos puede incorporarse sin modificar el código.
+El esquema MODELOS contiene la configuración de los modelos de producción, los pronósticos generados y los errores calculados a medida que se conocen los valores reales. La tabla~\ref{tab:esquema_modelos} describe sus objetos. Las tablas de configuración tienen, en su mayoría, fechas de vigencia, por lo que cada proceso utiliza la configuración vigente en la fecha de cálculo.
 
 \begin{table}[H]
 	\centering
@@ -331,18 +331,74 @@ El esquema MODELOS contiene el catálogo de modelos y de escenarios meteorológi
 		\toprule
 		\textbf{Objeto} & \textbf{Tipo y capa} & \textbf{Clave} & \textbf{Contenido} \\
 		\midrule
-		\code{MODELOS\_TOTALES} & Dimensión & \code{MOD\_ID}, \code{FECHA\_DESDE} &
-		Modelos productivos: nombre, algoritmo, variable objetivo, nivel (región o MEM), variante de temperatura y vigencia. \\ \addlinespace
-		\code{ESCENARIOS\_\allowbreak TOTALES} & Dimensión & \code{ESC\_ID} &
-		Escenarios meteorológicos: nombre, descripción y vigencia. \\ \addlinespace
-		\code{ESCENARIOS\_\allowbreak FUENTES} & Dimensión & \code{ESC\_ID}, \code{VARIABLE}, \code{ANT\_DESDE} &
-		Fuente (\code{PRON\_ID}) de cada variable meteorológica por rango de anticipaciones e indicador de corrección del sesgo. \\ \addlinespace
-		\code{RESULTADOS\_\allowbreak MODELOS} & Tabla, capa~2 & \code{FECHA\_CALCULO}, \code{FECHA\_PRONOS}, \code{MOD\_ID}, \code{ESC\_ID}, \code{RGE\_ID} &
-		Predicción de cada modelo y escenario, con la anticipación y la versión del modelo registrada en MLflow. \\ \addlinespace
-		\code{PRONOSTICOS\_\allowbreak DEMANDA} & Tabla, capa~2 & \code{FECHA\_CALCULO}, \code{FECHA\_PRONOS}, \code{TARGET\_ID}, \code{RGE\_ID} &
-		Pronóstico publicado de cada variable objetivo, valor previo a la corrección del sesgo, sesgo aplicado y fuentes utilizadas en el promedio. \\ \addlinespace
-		\code{ERRORES\_MODELOS} & Vista, capa~3 & \code{FECHA\_CALCULO}, \code{FECHA\_PRONOS}, \code{MOD\_ID}, \code{ESC\_ID}, \code{RGE\_ID} &
-		Valor real, error, error absoluto y error porcentual absoluto de cada predicción y del pronóstico publicado. \\
+		\code{MODELOS\_TOTALES} & Dimensión & \code{MOD\_ID} &
+		Modelos de este trabajo, del proceso anterior y de la Programación Semanal: nombre, algoritmo, variable objetivo, plataforma, nivel (región o MEM), grupo de covariables, inclusión de las acerías y vigencia. \\ \addlinespace
+		\code{TARGET\_TOTALES} & Dimensión & \code{TARGET\_ID} &
+		Variables objetivo: energía, potencia pico y potencia mínima. \\ \addlinespace
+		\code{CONJUNTOS\_\allowbreak COVARIABLES} & Dimensión & \code{CCOV\_ID} &
+		Grupos de covariables G6 y G6A, con la variable de temperatura de los grados-día. \\ \addlinespace
+		\code{CONJUNTOS\_\allowbreak COVARIABLES\_\allowbreak VARIABLES} & Dimensión & \code{CCOV\_ID}, \code{VMET\_ID} &
+		Variables meteorológicas de cada grupo de covariables y su orden. \\ \addlinespace
+		\code{MODELOS\_\allowbreak PARAMETROS} & Configuración & \code{MOD\_ID}, \code{PARAMETRO}, \code{FECHA\_DESDE} &
+		Hiperparámetros de cada modelo. \\ \addlinespace
+		\code{ENSAMBLES\_\allowbreak MODELOS} & Configuración & \code{MOD\_ID\_\allowbreak ENSAMBLE}, \code{MOD\_ID\_\allowbreak MIEMBRO}, \code{FECHA\_DESDE} &
+		Composición de los ensambles y del pronóstico publicado, con un peso opcional por miembro. \\ \addlinespace
+		\code{PARAMETROS\_\allowbreak GENERALES} & Configuración & \code{PAR\_ID}, \code{FECHA\_DESDE} &
+		Parámetros del método: ventanas de las correcciones y de las bandas, percentiles, niveles de alerta y control del reentrenamiento. \\ \addlinespace
+		\code{UMBRALES\_\allowbreak GRADOS\_DIA} & Configuración & \code{RGE\_ID}, \code{VMET\_ID}, \code{FECHA\_DESDE} &
+		Umbrales de refrigeración y de calefacción de cada región y temperatura, con el período de datos de la estimación. \\ \addlinespace
+		\code{UMBRALES\_\allowbreak ALTA\_DEMANDA} & Configuración & \code{TARGET\_ID}, \code{RGE\_ID}, \code{ESTACION}, \code{FECHA\_DESDE} &
+		Umbrales fijos de alta demanda y de récord por estación, e indicador de alertas habilitadas. \\ \addlinespace
+		\code{RESULTADOS\_\allowbreak MODELOS} & Tabla, capa~2 & \code{MOD\_ID}, \code{FECHA\_CALCULO}, \code{FECHA\_\allowbreak PRONOSTICO}, \code{RGE\_ID}, \code{GPRON\_ID} &
+		Predicción de cada modelo y grupo de pronósticos, con la anticipación, la versión del modelo, el valor sin corregir, la banda, las fuentes alternativas utilizadas y, en el pronóstico publicado, las probabilidades, el riesgo meteorológico y las alertas. \\ \addlinespace
+		\code{ERRORES\_MODELOS} & Vista, capa~3 & \code{MOD\_ID}, \code{FECHA\_CALCULO}, \code{FECHA\_\allowbreak PRONOSTICO}, \code{RGE\_ID}, \code{GPRON\_ID} &
+		Valor real, error, error absoluto y error porcentual absoluto de cada predicción, error del valor sin corregir y pertenencia a la banda. \\ \addlinespace
+		\code{PRONOSTICOS\_\allowbreak TOTALES} & Vista, capa~3 & \code{MOD\_ID}, \code{FECHA\_CALCULO}, \code{FECHA\_\allowbreak PRONOSTICO}, \code{RGE\_ID}, \code{GPRON\_ID} &
+		Columnas de \code{ERRORES\_MODELOS}, con el consumo previsto de las acerías y los valores totales que lo incluyen. \\
+		\bottomrule
+	\end{tabularx}
+\end{table}
+
+La puesta en producción incorporó, además, objetos en los esquemas PRONOS y DEMANDA, que se describen en la tabla~\ref{tab:objetos_produccion}.
+
+\begin{table}[H]
+	\centering
+	\caption{Objetos de los esquemas PRONOS y DEMANDA incorporados en la puesta en producción.}
+	\label{tab:objetos_produccion}
+	\footnotesize
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	\begin{tabularx}{\textwidth}{
+			@{}
+			>{\raggedright\arraybackslash\hsize=1.0\hsize}X
+			>{\raggedright\arraybackslash\hsize=0.5\hsize}X
+			>{\raggedright\arraybackslash\hsize=1.0\hsize}X
+			>{\raggedright\arraybackslash\hsize=1.5\hsize}X
+			@{}
+		}
+		\toprule
+		\textbf{Objeto} & \textbf{Tipo y capa} & \textbf{Clave} & \textbf{Contenido} \\
+		\midrule
+		\code{PRONOS.\allowbreak VARIABLES\_METEO} & Dimensión & \code{VMET\_ID} &
+		Variables meteorológicas que utilizan los modelos, con su granularidad, unidad e indicador de corrección del sesgo. \\ \addlinespace
+		\code{PRONOS.\allowbreak GRUPOS\_PRONOS} & Configuración & \code{GPRON\_ID} &
+		Grupos de pronósticos, con su grupo de covariables, su rol y su vigencia. \\ \addlinespace
+		\code{PRONOS.\allowbreak GRUPOS\_PRONOS\_\allowbreak REGLAS} & Configuración & \code{GPRON\_ID}, \code{VMET\_ID}, \code{ANT\_DESDE} &
+		Fuente de cada variable por rango de anticipaciones, fuente alternativa e indicador de corrección del sesgo. \\ \addlinespace
+		\code{PRONOS.\allowbreak ERRORES\_PRONOS} & Vista, capa~3 & \code{FECHA\_CALCULO}, \code{FECHA\_PRONOS}, \code{PRON\_ID}, \code{RGE\_ID}, \code{VARIABLE} &
+		Valor pronosticado, valor observado y error de cada variable meteorológica. \\ \addlinespace
+		\code{DEMANDA.\allowbreak ACERIAS\_TOTALES} & Dimensión & \code{ACER\_ID} &
+		Acerías, con su región, el medidor del SOTR de su consumo, la potencia máxima y la vigencia. \\ \addlinespace
+		\code{DEMANDA.\allowbreak ACERIAS\_DEFECTO} & Configuración & \code{ACER\_ID}, \code{FECHA\_DESDE} &
+		Potencia media por defecto de cada acería para días hábiles, sábados y domingos o feriados. \\ \addlinespace
+		\code{DEMANDA.\allowbreak ACERIAS\_\allowbreak DECLARADAS} & Tabla & \code{FECHA}, \code{ACER\_ID} &
+		Potencia media declarada para cada acería y fecha, con el usuario y el momento de la carga. \\ \addlinespace
+		\code{DEMANDA.\allowbreak ACERIAS\_\allowbreak PREVISTAS} & Vista, capa~3 & \code{FECHA}, \code{ACER\_ID} &
+		Potencia media prevista de cada acería, declarada o por defecto, con su origen. \\ \addlinespace
+		\code{DEMANDA.\allowbreak ACERIAS\_\allowbreak REALES\_10M} & Tabla, capa~1 & \code{FECHA}, \code{HORA}, \code{INTERVALO}, \code{ACER\_ID} &
+		Consumo real de cada acería cada diez minutos, obtenido del SOTR. \\ \addlinespace
+		\code{DEMANDA.\allowbreak ACERIAS\_\allowbreak REALES\_DIARIA} & Vista, capa~3 & \code{FECHA}, \code{ACER\_ID} &
+		Potencia media y energía diaria real de cada acería. \\
 		\bottomrule
 	\end{tabularx}
 \end{table}
