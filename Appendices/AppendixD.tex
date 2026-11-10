@@ -1,0 +1,75 @@
+% Appendix D
+
+\chapter{Configuración de los modelos} % Main appendix title
+
+\label{AppendixD}
+
+En este apéndice se presentan el espacio de búsqueda de los hiperparámetros de LGBM\_OPT y los umbrales de los grados-día, descritos en la sección~\ref{sec:desarrollo_modelos}.
+
+%----------------------------------------------------------------------------------------
+\section{Espacio de búsqueda de los hiperparámetros}
+\label{sec:apendice_optuna}
+%----------------------------------------------------------------------------------------
+
+La tabla~\ref{tab:espacio_optuna} presenta los rangos explorados con Optuna en la búsqueda de los hiperparámetros de LGBM\_OPT, descrita en la subsección~\ref{subsec:modelos_profundos}.
+
+\begin{table}[H]
+	\centering
+	\caption{Espacio de búsqueda de los hiperparámetros de LGBM\_OPT.}
+	\label{tab:espacio_optuna}
+	\footnotesize
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	\begin{tabularx}{\textwidth}{
+			@{}
+			>{\raggedright\arraybackslash\hsize=1.2\hsize}X
+			>{\raggedright\arraybackslash\hsize=0.8\hsize}X
+			@{}
+		}
+		\toprule
+		\textbf{Hiperparámetro} & \textbf{Rango} \\
+		\midrule
+		Cantidad de árboles & 100 a 1000, en pasos de 50. \\
+		Tasa de aprendizaje & 0,01 a 0,2, escala logarítmica. \\
+		Cantidad de hojas & 8 a 128, escala logarítmica. \\
+		Mínimo de observaciones por hoja & 5 a 100, escala logarítmica. \\
+		Fracción de observaciones por árbol & 0,5 a 1. \\
+		Fracción de variables por árbol & 0,5 a 1. \\
+		Regularización L2 & $10^{-3}$ a 10, escala logarítmica. \\
+		\bottomrule
+	\end{tabularx}
+\end{table}
+
+%----------------------------------------------------------------------------------------
+\section{Umbrales de los grados-día}
+\label{sec:apendice_umbrales}
+%----------------------------------------------------------------------------------------
+
+La tabla~\ref{tab:umbrales_grados_dia} presenta los umbrales de grados-día, descritos en la subsección~\ref{subsec:respuesta_temperatura}.
+
+\begin{table}[H]
+	\centering
+	\caption{Umbrales de grados-día por región eléctrica, en \textdegree C.}
+	\label{tab:umbrales_grados_dia}
+	\footnotesize
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.15}
+	\begin{tabular}{@{}lcccc@{}}
+		\toprule
+		& \multicolumn{2}{c}{\textbf{Temperatura aparente}} & \multicolumn{2}{c}{\textbf{Temperatura del aire}} \\
+		\cmidrule(lr){2-3} \cmidrule(l){4-5}
+		\textbf{Región} & \textbf{Refrigeración} & \textbf{Calefacción} & \textbf{Refrigeración} & \textbf{Calefacción} \\
+		\midrule
+		CEN & 20,0 & 12,5 & 20,0 & 15,5 \\
+		COM & 17,0 & 12,5 & 19,5 & 15,5 \\
+		CUY & 17,5 & 13,0 & 20,5 & 15,5 \\
+		GBA & 23,0 & 17,0 & 22,0 & 18,0 \\
+		LIT & 21,0 & 14,0 & 21,0 & 16,0 \\
+		NEA & 22,0 & 12,5 & 21,0 & 15,0 \\
+		NOA & 21,0 & 14,5 & 21,0 & 15,5 \\
+		PAT & 14,5 & 14,5 & 19,0 & 17,0 \\
+		PBN & 21,5 & 15,5 & 21,0 & 18,5 \\
+		PBS & 17,0 & 12,0 & 19,5 & 16,0 \\
+		\bottomrule
+	\end{tabular}
+\end{table}

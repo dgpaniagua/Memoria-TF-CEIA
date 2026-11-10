@@ -129,7 +129,7 @@ La figura~\ref{fig:referencia_sesgo} presenta la distribución del error porcent
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{./Figures/cap4_referencia_sesgo.pdf}
-	\caption{Distribución del error porcentual de la energía del MEM por anticipación de LightGBM con el pronóstico de IFS. Las cajas representan los percentiles 25 y 75, y los bigotes, los percentiles 5 y 95.}
+	\caption{Error porcentual de la energía del MEM por anticipación de LightGBM con IFS. Las cajas indican los percentiles 25 y 75, y los bigotes, los percentiles 5 y 95.}
 	\label{fig:referencia_sesgo}
 \end{figure}
 
@@ -140,11 +140,11 @@ La variante que incorpora las covariables de los días anteriores al pronosticad
 \label{subsec:resultados_profundos}
 %----------------------------------------------------------------------------------------
 
-La tabla~\ref{tab:resultados_profundos} presenta las métricas de la energía del MEM obtenidas en la segunda etapa. En esta etapa, la historia de pronósticos de IFS disponible cubría las anticipaciones 0 a 12, por lo que las métricas de ese escenario corresponden a ese rango. La tabla incluye el tiempo medio de cada reentrenamiento mensual de los modelos entrenados con GPU.
+La tabla~\ref{tab:resultados_profundos} presenta las métricas de la energía del MEM obtenidas en la segunda etapa. En esa instancia, la historia de pronósticos de IFS disponible cubría las anticipaciones 0 a 12, por lo que las métricas de ese escenario corresponden a ese rango. La tabla incluye el tiempo medio de cada reentrenamiento mensual de los modelos entrenados con GPU.
 
 \begin{table}[H]
 	\centering
-	\caption{Métricas de la energía del MEM de los modelos de aprendizaje profundo y fundacionales, y tiempo medio de entrenamiento. MAPE y sesgo en \%, RMSE en GWh y tiempo en segundos.}
+	\caption{Métricas de la energía del MEM y tiempo de entrenamiento de los modelos de aprendizaje profundo y fundacionales. MAPE y sesgo en \%, RMSE en GWh y tiempo en segundos.}
 	\label{tab:resultados_profundos}
 	\small
 	\setlength{\tabcolsep}{4pt}
@@ -185,7 +185,7 @@ La figura~\ref{fig:profundos_sesgo} compara la distribución del error porcentua
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{./Figures/cap4_profundos_sesgo.pdf}
-	\caption{Distribución del error porcentual de la energía del MEM por anticipación de LGBM\_OPT y TSMixer con el pronóstico de IFS. Las cajas representan los percentiles 25 y 75, y los bigotes, los percentiles 5 y 95.}
+	\caption{Error porcentual de la energía del MEM por anticipación de LGBM\_OPT y TSMixer con IFS. Las cajas indican los percentiles 25 y 75, y los bigotes, los percentiles 5 y 95.}
 	\label{fig:profundos_sesgo}
 \end{figure}
 
@@ -198,7 +198,7 @@ Chronos-2 obtuvo los mayores errores entre los modelos entrenados. El ajuste med
 
 La tabla~\ref{tab:resultados_g5} compara las configuraciones Regional G5, Regional G5A y MEM G5 en la energía del MEM. En esta etapa se incorporaron los ensambles.
 
-El resultado más importante a destacar, es que el pronóstico directo de la energía del MEM (MEM G5) resultó menos preciso que la suma de los pronósticos regionales en todos los modelos. Esto confirma una de las hipótesis que motivaron el proyecto, donde se propuso realizar pronósticos por región en lugar del total país de forma directa.
+El resultado más importante es que el pronóstico directo de la energía del MEM (MEM G5) resultó menos preciso que la suma de los pronósticos regionales en todos los modelos. Esto confirma una de las hipótesis que motivaron el proyecto, en la que se propuso realizar pronósticos por región en lugar del total país de forma directa.
 
 Comparando estos dos grupos, TSMixer pasa de un MAPE de 1,57\,\% (suma regional) frente a 3,37\,\% (directo) con la meteorología observada, mientras que LSTM pasa de 1,82\,\%  a 2,83\,\%. Esto responde a que en el pronóstico directo disponen de una única serie para entrenar, en lugar de las diez series regionales del entrenamiento global. 
 
@@ -287,7 +287,7 @@ ENS\_STACK obtuvo el menor error en las tres variables. La potencia pico result�
 \label{subsec:resultados_temperatura}
 %----------------------------------------------------------------------------------------
 
-La tabla~\ref{tab:resultados_g6} compara las configuraciones Regional G5 y Regional G6 en la energía del MEM. Además del promedio de todos los días, se presenta el MAPE en los días de alta demanda definidos en la sección~\ref{subsec:condiciones_comparacion}. En la configuración Regional G5, los ensambles incluyen también a GRU.
+La tabla~\ref{tab:resultados_g6} compara las configuraciones Regional G5 y Regional G6 en la energía del MEM. Además del promedio de todos los días, se presenta el MAPE en los días de alta demanda definidos en la subsección~\ref{subsec:condiciones_comparacion}. En la configuración Regional G5, los ensambles incluyen también a GRU.
 
 \begin{table}[H]
 	\centering
@@ -457,7 +457,7 @@ Para identificar el origen de los mayores errores, se compararon con los del ens
 
 \subsection{Días de alta demanda y alertas}
 
-En los días de alta demanda, el pronóstico publicado mantiene una subestimación sistemática. En la energía, su MAPE en esos días fue de 5,10\,\% y su sesgo de $-4{,}15$\,\%. En la potencia pico, los valores fueron de 5,57\,\% y $-4{,}48$\,\%, y en la potencia mínima, de 5,50\,\% y $-4{,}28$\,\%. Esta subestimación motivó las alertas de alta demanda descritas en la sección~\ref{subsec:alertas_alta_demanda}.
+En los días de alta demanda, el pronóstico publicado mantiene una subestimación sistemática. En la energía, su MAPE en esos días fue de 5,10\,\% y su sesgo de $-4{,}15$\,\%. En la potencia pico, los valores fueron de 5,57\,\% y $-4{,}48$\,\%, y en la potencia mínima, de 5,50\,\% y $-4{,}28$\,\%. Esta subestimación motivó las alertas de alta demanda descritas en la subsección~\ref{subsec:alertas_alta_demanda}.
 
 La tabla~\ref{tab:resultados_alertas} evalúa las alertas del MEM en el período de prueba. Los umbrales corresponden al percentil 95 de cada estación (verano e invierno), por lo que los casos de alta demanda son los días que lo superaron: 19 días en la energía y 21 en la potencia pico. Cada caso se evalúa en todas las anticipaciones en las que fue pronosticado. La detección es la proporción de casos alertados, y los aciertos, la proporción de alertas que correspondieron a un caso de alta demanda. Como referencia, se incluye la regla que alerta cuando el pronóstico publicado supera el umbral.
 
@@ -498,7 +498,7 @@ Los ensayos de integración verificaron que el sistema en producción reproduce 
 
 El módulo \code{pronodem-idp} incluye pruebas unitarias de los grados-día, de la corrección de los pronósticos meteorológicos, de las reglas de los grupos de pronósticos, del promedio de grupos, de la corrección del sesgo y de las bandas, construidas con casos verificables. Incluye, además, pruebas de paridad que comparan sus predicciones con las de los notebooks de desarrollo para los modelos guardados de cada reentrenamiento mensual.
 
-Con esos modelos se generó la historia de pronósticos desde el 01/09/2025 hasta el 11/10/2026, con 2\,238\,912 registros en la tabla de resultados, identificados con la versión \code{BACKTEST}. Las métricas calculadas desde la vista de errores fueron equivalentes a las de la sección~\ref{subsec:resultados_postproceso}. El notebook diario, ejecutado para el 11/10/2026, generó la misma cantidad de registros y las mismas alertas que la historia, con una diferencia media en los valores de 0,0002\,\%.
+Con esos modelos se generó la historia de pronósticos desde el 01/09/2025 hasta el 11/10/2026, con 2\,238\,912 registros en la tabla de resultados, identificados con la versión \code{BACKTEST}. Las métricas calculadas desde la vista de errores fueron equivalentes a las de la subsección~\ref{subsec:resultados_postproceso}. El notebook diario, ejecutado para el 11/10/2026, generó la misma cantidad de registros y las mismas alertas que la historia, con una diferencia media en los valores de 0,0002\,\%.
 
 \subsection{Evaluación de la ejecución diaria en producción}
 

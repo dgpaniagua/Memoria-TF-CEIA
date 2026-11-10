@@ -81,7 +81,7 @@ A modo de ejemplo, la demanda de LIT corregida por pérdidas para el instante de
 	\label{eq:demanda_lit}
 \end{equation}
 
-Al resolver las operaciones, resulta:
+Al resolver las operaciones, se obtiene la ecuación~\ref{eq:demanda_lit_resultado}:
 
 \begin{equation}
 	D_{\mathrm{LIT}}
@@ -90,6 +90,7 @@ Al resolver las operaciones, resulta:
 	\left(-1114-84+142+1168{,}5\right)
 	=
 	1511{,}5~\mathrm{MW}
+	\label{eq:demanda_lit_resultado}
 \end{equation}
 
 El valor obtenido, de 1511,5~MW, difiere de los 1482~MW que resultan sin considerar las pérdidas. En caso de no aplicar esta corrección, la demanda nacional agregada presentaría un error considerable introducido en los datos de entrenamiento de los modelos.
@@ -110,7 +111,7 @@ En la primera etapa de la limpieza se identifican valores extremos por región m
 	\label{fig:correccion_outliers}
 \end{figure}
 
-El método de eliminación de outliers es eficiente para fallas de medición, donde se alcanzan valores extremos durante intervalos breves. Las correcciones más desafiantes son aquellas que corresponden a fallas reales del sistema eléctrico, por ejemplo, la desconexión intempestiva de una línea de transmisión que hace caer la demanda abruptamente. En estos casos, es deseable inferir el valor de demanda que se habría registrado sin la falla, ya que, a los fines del entrenamiento de un modelo predictivo, esa caída representa un error que debe desestimarse.
+El método de eliminación de outliers es eficiente para fallas de medición, en las que se alcanzan valores extremos durante intervalos breves. Las correcciones más desafiantes son aquellas que corresponden a fallas reales del sistema eléctrico; por ejemplo, la desconexión intempestiva de una línea de transmisión que hace caer la demanda abruptamente. En estos casos, es deseable inferir el valor de demanda que se habría registrado sin la falla, ya que, a los fines del entrenamiento de un modelo predictivo, esa caída representa un error que debe desestimarse.
 
 Por este motivo, en la segunda etapa se detectan escalones abruptos dentro de un mismo día. Un cambio se considera candidato a corrección cuando supera simultáneamente un umbral relativo del 7\,\% y un umbral absoluto de 100~MW. Estos valores fueron determinados a partir de la recomendación de los especialistas de CAMMESA en combinación con el análisis de amplios rangos temporales. La detección y corrección se ejecuta de manera iterativa, con un máximo de diez iteraciones. Los puntos identificados se interpolan y, cuando la interpolación no resulta posible en los extremos, se completan mediante propagación hacia adelante o hacia atrás. En la figura \ref{fig:correccion_saltos_bruscos} puede verse un caso de corrección de saltos bruscos.
 

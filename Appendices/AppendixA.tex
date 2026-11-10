@@ -4,7 +4,7 @@
 
 \label{AppendixA}
 
-En este apéndice se describen las tablas y vistas del warehouse \code{WH\_PSYD} que intervienen en el pipeline de datos presentado en la sección~\ref{sec:pipeline_datos}. Se detallan los esquemas DEMANDA, METEO y PRONOS, junto con las dimensiones que los vinculan, y el esquema MODELOS, que contiene la configuración y los resultados de los modelos en producción, junto con los objetos que la puesta en producción incorporó en los demás esquemas. Para cada objeto se indican la capa a la que pertenece, su clave y su contenido. Las variables comunes a varias tablas se describen una única vez.
+En este apéndice se describen las tablas y vistas del warehouse \code{WH\_PSYD} que intervienen en el pipeline de datos presentado en la sección~\ref{sec:pipeline_datos}. 
 
 %----------------------------------------------------------------------------------------
 \section{Relaciones entre esquemas}
@@ -45,25 +45,25 @@ Los esquemas se vinculan mediante tres identificadores. \code{RGE\_ID} identific
 			\draw[rel] (pl2.north) -- (est.south) node[clave, midway] {\code{EMET\_ID}};
 			\draw[rel] (pl2.east) -- (pt.west) node[clave, midway] {\code{PRON\_ID}};
 			% Leyenda
-			\node[capauno, text width=2.2cm, align=center] at (0.6,-8.6) {Capa 1};
-			\node[capados, text width=2.2cm, align=center] at (3.6,-8.6) {Capa 2};
-			\node[dimension, text width=2.2cm, align=center] at (6.6,-8.6) {Dimensión};
+			\node[capauno, text width=2.2cm, align=center] at (3.5,-8.6) {Capa 1};
+			\node[capados, text width=2.2cm, align=center] at (6.5,-8.6) {Capa 2};
+			\node[dimension, text width=2.2cm, align=center] at (9.5,-8.6) {Dimensión};
 		\end{tikzpicture}%
 	}
-	\caption{Relaciones entre las tablas principales de los esquemas DEMANDA, METEO y PRONOS.}
+	\caption{Relaciones entre las tablas principales de los esquemas \code{DEMANDA}, \code{METEO} y \code{PRONOS}.}
 	\label{fig:modelo_datos}
 \end{figure}
 
 %----------------------------------------------------------------------------------------
-\section{Esquema DEMANDA}
+\section{Esquema \texorpdfstring{\code{DEMANDA}}{DEMANDA}}
 \label{sec:apendice_demanda}
 %----------------------------------------------------------------------------------------
 
-El esquema DEMANDA contiene la demanda eléctrica calculada a partir del SOTR y las variables objetivo de los modelos. La tabla~\ref{tab:esquema_demanda} describe sus objetos.
+El esquema \code{DEMANDA} contiene la demanda eléctrica calculada a partir del SOTR y las variables objetivo de los modelos. La tabla~\ref{tab:esquema_demanda} describe sus objetos.
 
 \begin{table}[H]
 	\centering
-	\caption{Tablas y vistas del esquema DEMANDA.}
+	\caption{Tablas y vistas del esquema \code{DEMANDA}.}
 	\label{tab:esquema_demanda}
 	\footnotesize
 	\setlength{\tabcolsep}{4pt}
@@ -93,7 +93,7 @@ La tabla~\ref{tab:columnas_demanda} detalla las columnas de las dos tablas del e
 
 \begin{table}[H]
 	\centering
-	\caption{Columnas de las tablas del esquema DEMANDA.}
+	\caption{Columnas de las tablas del esquema \code{DEMANDA}.}
 	\label{tab:columnas_demanda}
 	\footnotesize
 	\setlength{\tabcolsep}{4pt}
@@ -125,15 +125,15 @@ La tabla~\ref{tab:columnas_demanda} detalla las columnas de las dos tablas del e
 \end{table}
 
 %----------------------------------------------------------------------------------------
-\section{Esquema METEO}
+\section{Esquema \texorpdfstring{\code{METEO}}{METEO}}
 \label{sec:apendice_meteo}
 %----------------------------------------------------------------------------------------
 
-El esquema METEO contiene las estaciones meteorológicas, su asociación con las regiones eléctricas y los datos observados del SMN y de Open-Meteo. La tabla~\ref{tab:esquema_meteo} describe sus objetos. Las tablas de capa~2 se separan por fuente y por resolución, mientras que las vistas de capa~3 integran ambas fuentes: para cada variable toman el valor del SMN y, si no está disponible, el de Open-Meteo.
+El esquema \code{METEO} contiene las estaciones meteorológicas, su asociación con las regiones eléctricas y los datos observados del SMN y de Open-Meteo. La tabla~\ref{tab:esquema_meteo} describe sus objetos. Las tablas de capa~2 se separan por fuente y por resolución, mientras que las vistas de capa~3 integran ambas fuentes: para cada variable toman el valor del SMN y, si no está disponible, el de Open-Meteo.
 
 \begin{table}[H]
 	\centering
-	\caption{Tablas y vistas del esquema METEO.}
+	\caption{Tablas y vistas del esquema \code{METEO}.}
 	\label{tab:esquema_meteo}
 	\footnotesize
 	\setlength{\tabcolsep}{4pt}
@@ -240,15 +240,15 @@ Las tablas~\ref{tab:variables_horarias} y \ref{tab:variables_diarias} describen 
 \end{table}
 
 %----------------------------------------------------------------------------------------
-\section{Esquema PRONOS}
+\section{Esquema \texorpdfstring{\code{PRONOS}}{PRONOS}}
 \label{sec:apendice_pronos}
 %----------------------------------------------------------------------------------------
 
-El esquema PRONOS contiene los modelos y servicios de pronóstico meteorológico y los valores pronosticados. La tabla~\ref{tab:esquema_pronos} describe sus objetos. A diferencia del esquema METEO, las tablas de capa~2 integran todas las fuentes y las distinguen mediante \code{PRON\_ID}. Las vistas de capa~3 presentan los valores por región eléctrica, según la estación vigente en la fecha de cálculo.
+El esquema \code{PRONOS} contiene los modelos y servicios de pronóstico meteorológico y los valores pronosticados. La tabla~\ref{tab:esquema_pronos} describe sus objetos. A diferencia del esquema \code{METEO}, las tablas de capa~2 integran todas las fuentes y las distinguen mediante \code{PRON\_ID}. Las vistas de capa~3 presentan los valores por región eléctrica, según la estación vigente en la fecha de cálculo.
 
 \begin{table}[H]
 	\centering
-	\caption{Tablas y vistas del esquema PRONOS.}
+	\caption{Tablas y vistas del esquema \code{PRONOS}.}
 	\label{tab:esquema_pronos}
 	\footnotesize
 	\setlength{\tabcolsep}{4pt}
@@ -282,7 +282,7 @@ Las variables meteorológicas de estas tablas son las descritas en las tablas~\r
 
 \begin{table}[H]
 	\centering
-	\caption{Columnas propias de las tablas y vistas del esquema PRONOS.}
+	\caption{Columnas propias de las tablas y vistas del esquema \code{PRONOS}.}
 	\label{tab:columnas_pronos}
 	\footnotesize
 	\setlength{\tabcolsep}{4pt}
@@ -307,15 +307,15 @@ Las variables meteorológicas de estas tablas son las descritas en las tablas~\r
 \end{table}
 
 %----------------------------------------------------------------------------------------
-\section{Esquema MODELOS}
+\section{Esquema \texorpdfstring{\code{MODELOS}}{MODELOS}}
 \label{sec:apendice_modelos}
 %----------------------------------------------------------------------------------------
 
-El esquema MODELOS contiene la configuración de los modelos de producción, los pronósticos generados y los errores calculados a medida que se conocen los valores reales. La tabla~\ref{tab:esquema_modelos} describe sus objetos. Las tablas de configuración tienen, en su mayoría, fechas de vigencia, por lo que cada proceso utiliza la configuración vigente en la fecha de cálculo.
+El esquema \code{MODELOS} contiene la configuración de los modelos de producción, los pronósticos generados y los errores calculados a medida que se conocen los valores reales. La tabla~\ref{tab:esquema_modelos} describe sus objetos. Las tablas de configuración tienen, en su mayoría, fechas de vigencia, por lo que cada proceso utiliza la configuración vigente en la fecha de cálculo.
 
 \begin{table}[H]
 	\centering
-	\caption{Tablas y vistas del esquema MODELOS.}
+	\caption{Tablas y vistas del esquema \code{MODELOS}.}
 	\label{tab:esquema_modelos}
 	\footnotesize
 	\setlength{\tabcolsep}{4pt}
@@ -359,11 +359,11 @@ El esquema MODELOS contiene la configuración de los modelos de producción, los
 	\end{tabularx}
 \end{table}
 
-La puesta en producción incorporó, además, objetos en los esquemas PRONOS y DEMANDA, que se describen en la tabla~\ref{tab:objetos_produccion}.
+La puesta en producción incorporó, además, objetos en los esquemas \code{PRONOS} y \code{DEMANDA}, que se describen en la tabla~\ref{tab:objetos_produccion}.
 
 \begin{table}[H]
 	\centering
-	\caption{Objetos de los esquemas PRONOS y DEMANDA incorporados en la puesta en producción.}
+	\caption{Objetos de los esquemas \code{PRONOS} y \code{DEMANDA} incorporados en la puesta en producción.}
 	\label{tab:objetos_produccion}
 	\footnotesize
 	\setlength{\tabcolsep}{4pt}
