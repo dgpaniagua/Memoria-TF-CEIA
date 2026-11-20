@@ -129,7 +129,13 @@ La tabla~\ref{tab:columnas_demanda} detalla las columnas de las dos tablas del e
 \label{sec:apendice_meteo}
 %----------------------------------------------------------------------------------------
 
-El esquema \code{METEO} contiene las estaciones meteorológicas, su asociación con las regiones eléctricas y los datos observados del SMN y de Open-Meteo. La tabla~\ref{tab:esquema_meteo} describe sus objetos. Las tablas de capa~2 se separan por fuente y por resolución, mientras que las vistas de capa~3 integran ambas fuentes: para cada variable toman el valor del SMN y, si no está disponible, el de Open-Meteo.
+El esquema \code{METEO} contiene las estaciones meteorológicas, su asociación con las regiones eléctricas y los datos observados del SMN y de Open-Meteo.
+
+Las tablas de capa~2 se separan por fuente y por resolución, es decir que se mantienen cuatro tablas:   valores diarios y horarios tanto para SMN como para Open-Meteo.
+
+En las vistas de capa~3 el enfoque es distinto, se integran ambas fuentes para que el consumidor tome datos validados sin elegir la fuente. El criterio es que para cada variable se toma el valor del SMN y, si no está disponible, el de Open-Meteo.
+
+En la tabla~\ref{tab:esquema_meteo} se presentan los objetos de este esquema. 
 
 \begin{table}[H]
 	\centering
@@ -150,30 +156,30 @@ El esquema \code{METEO} contiene las estaciones meteorológicas, su asociación 
 		\textbf{Objeto} & \textbf{Tipo y capa} & \textbf{Clave} & \textbf{Contenido} \\
 		\midrule
 		\code{ESTACIONES\_METEO\_\allowbreak TOTALES} & Dimensión & \code{EMET\_ID} &
-		Estaciones meteorológicas: nombre, código OACI, provincia, región y prioridad dentro de ella, coordenadas, altura, localidad del SMN y vigencia. \\ \addlinespace
+		Estaciones meteorológicas: nombre, código OACI, provincia, región y prioridad dentro de ella, coordenadas, altura, localidad del SMN y vigencia. \\ \addlinespace[6pt]
 		\code{ESTACIONES\_REGIONES} & Dimensión & \code{EMET\_ID}, \code{RGE\_ID} &
-		Estación representativa de cada región eléctrica y su período de vigencia. \\ \addlinespace
+		Estación representativa de cada región eléctrica y su período de vigencia. \\ \addlinespace[6pt]
 		\code{L2\_SMN\_\allowbreak VALORES\_HORARIOS\_\allowbreak REALES} & Tabla, capa~2 & \code{FECHA\_HORA}, \code{EMET\_ID} &
-		Observaciones horarias del SMN y temperatura aparente calculada. \\ \addlinespace
+		Observaciones horarias del SMN y temperatura aparente calculada. \\ \addlinespace[6pt]
 		\code{L2\_SMN\_\allowbreak VALORES\_DIARIOS\_\allowbreak REALES} & Tabla, capa~2 & \code{FECHA}, \code{EMET\_ID} &
-		Valores diarios del SMN, sin nubosidad, precipitación ni radiación. \\ \addlinespace
+		Valores diarios del SMN, sin nubosidad, precipitación ni radiación. \\ \addlinespace[6pt]
 		\code{L2\_OMET\_\allowbreak VALORES\_HORARIOS\_\allowbreak REALES} & Tabla, capa~2 & \code{FECHA\_HORA}, \code{EMET\_ID} &
-		Valores horarios de Open-Meteo para las coordenadas de cada estación. \\ \addlinespace
+		Valores horarios de Open-Meteo para las coordenadas de cada estación. \\ \addlinespace[6pt]
 		\code{L2\_OMET\_\allowbreak VALORES\_DIARIOS\_\allowbreak REALES} & Tabla, capa~2 & \code{FECHA}, \code{EMET\_ID} &
-		Valores diarios de Open-Meteo para las coordenadas de cada estación. \\ \addlinespace
+		Valores diarios de Open-Meteo para las coordenadas de cada estación. \\ \addlinespace[6pt]
 		\code{L3\_METEO\_\allowbreak VALORES\_HORARIOS\_\allowbreak REALES} & Vista, capa~3 & \code{FECHA\_HORA}, \code{EMET\_ID} &
-		Valores horarios por estación que integran ambas fuentes. \\ \addlinespace
+		Valores horarios por estación que integran ambas fuentes. \\ \addlinespace[6pt]
 		\code{L3\_METEO\_\allowbreak VALORES\_DIARIOS\_\allowbreak REALES} & Vista, capa~3 & \code{FECHA}, \code{EMET\_ID} &
-		Valores diarios por estación que integran ambas fuentes. \\ \addlinespace
+		Valores diarios por estación que integran ambas fuentes. \\ \addlinespace[6pt]
 		\code{L3\_METEO\_\allowbreak VALORES\_HORARIOS\_\allowbreak REALES\_REGIONES} & Vista, capa~3 & \code{FECHA\_HORA}, \code{RGE\_ID} &
-		Valores horarios de la estación vigente para cada región eléctrica. \\ \addlinespace
+		Valores horarios de la estación vigente para cada región eléctrica. \\ \addlinespace[6pt]
 		\code{L3\_METEO\_\allowbreak VALORES\_DIARIOS\_\allowbreak REALES\_REGIONES} & Vista, capa~3 & \code{FECHA}, \code{RGE\_ID} &
 		Valores diarios de la estación vigente para cada región eléctrica. \\
 		\bottomrule
 	\end{tabularx}
 \end{table}
 
-Las tablas~\ref{tab:variables_horarias} y \ref{tab:variables_diarias} describen las variables meteorológicas horarias y diarias. Son las mismas en las tablas de datos observados y en las de pronósticos. Cada tabla contiene solo las variables que su fuente provee. Todas incluyen, además, la columna \code{ULT\_FECHA}, con la fecha y hora de la última actualización del registro.
+Las tablas~\ref{tab:variables_horarias} y \ref{tab:variables_diarias} describen las variables meteorológicas horarias y diarias, que son las mismas tanto en las tablas de datos observados como en las de pronósticos. Cada tabla contiene solo las variables que su fuente provee. En aquellas que se combinan fuentes, los datos faltantes quedan como nulos. Por otra parte, todas las tablas incluyen la columna \code{ULT\_FECHA}, con la fecha y hora de la última actualización del registro.
 
 \begin{table}[H]
 	\centering
@@ -224,16 +230,16 @@ Las tablas~\ref{tab:variables_horarias} y \ref{tab:variables_diarias} describen 
 		\toprule
 		\textbf{Columna} & \textbf{Unidad} & \textbf{Descripción} \\
 		\midrule
-		\code{FECHA} & -- & Fecha del valor. \\
-		\code{TEMP\_MAX}, \code{TEMP\_MIN} & \textdegree C & Temperaturas máxima y mínima del día. \\
-		\code{TEMP\_MED} & \textdegree C & Semisuma de las temperaturas máxima y mínima. \\
-		\code{TEMP\_AVG} & \textdegree C & Promedio de las temperaturas del día. \\
-		\code{TEMP\_APARENTE\_MAX}, \code{TEMP\_APARENTE\_MIN}, \code{TEMP\_APARENTE\_MED}, \code{TEMP\_APARENTE\_AVG} & \textdegree C & Valores análogos para la temperatura aparente. \\
-		\code{VIENTO\_VEL\_8HS\_KMH}, \code{VIENTO\_VEL\_15HS\_KMH}, \code{VIENTO\_VEL\_21HS\_KMH} & km/h & Velocidad del viento a las 8, 15 y 21 horas. \\
-		\code{VIENTO\_DIR\_8HS\_GRADOS}, \code{VIENTO\_DIR\_15HS\_GRADOS}, \code{VIENTO\_DIR\_21HS\_GRADOS} & \textdegree & Dirección del viento a las 8, 15 y 21 horas. \\
-		\code{HUMEDAD\_RELATIVA\_15HS} & \% & Humedad relativa a las 15 horas. \\
-		\code{NUBOSIDAD\_MEDIA\_PORC} & \% & Cobertura nubosa media del día. \\
-		\code{PRECIPITACION\_ACUM\_MM} & mm & Precipitación acumulada en el día. \\
+		\code{FECHA} & -- & Fecha del valor. \\ \addlinespace[4pt]
+		\code{TEMP\_MAX}, \code{TEMP\_MIN} & \textdegree C & Temperaturas máxima y mínima del día. \\ \addlinespace[4pt]
+		\code{TEMP\_MED} & \textdegree C & Semisuma de las temperaturas máxima y mínima. \\ \addlinespace[4pt]
+		\code{TEMP\_AVG} & \textdegree C & Promedio de las temperaturas del día. \\ \addlinespace[4pt]
+		\code{TEMP\_APARENTE\_MAX}, \code{TEMP\_APARENTE\_MIN}, \code{TEMP\_APARENTE\_MED}, \code{TEMP\_APARENTE\_AVG} & \textdegree C & Valores análogos para la temperatura aparente. \\ \addlinespace[4pt]
+		\code{VIENTO\_VEL\_8HS\_KMH}, \code{VIENTO\_VEL\_15HS\_KMH}, \code{VIENTO\_VEL\_21HS\_KMH} & km/h & Velocidad del viento a las 8, 15 y 21 horas. \\ \addlinespace[4pt]
+		\code{VIENTO\_DIR\_8HS\_GRADOS}, \code{VIENTO\_DIR\_15HS\_GRADOS}, \code{VIENTO\_DIR\_21HS\_GRADOS} & \textdegree & Dirección del viento a las 8, 15 y 21 horas. \\ \addlinespace[4pt]
+		\code{HUMEDAD\_RELATIVA\_15HS} & \% & Humedad relativa a las 15 horas. \\ \addlinespace[4pt]
+		\code{NUBOSIDAD\_MEDIA\_PORC} & \% & Cobertura nubosa media del día. \\ \addlinespace[4pt]
+		\code{PRECIPITACION\_ACUM\_MM} & mm & Precipitación acumulada en el día. \\ \addlinespace[4pt]
 		\code{RADIACION\_SOLAR\_\allowbreak ACUM\_MJ\_\allowbreak M2} & MJ/m\textsuperscript{2} & Radiación solar global acumulada en el día. \\
 		\bottomrule
 	\end{tabularx}
@@ -322,8 +328,8 @@ El esquema \code{MODELOS} contiene la configuración de los modelos de producci�
 	\renewcommand{\arraystretch}{1.15}
 	\begin{tabularx}{\textwidth}{
 			@{}
-			>{\raggedright\arraybackslash\hsize=1.0\hsize}X
-			>{\raggedright\arraybackslash\hsize=0.5\hsize}X
+			>{\raggedright\arraybackslash\hsize=0.9\hsize}X
+			>{\raggedright\arraybackslash\hsize=0.6\hsize}X
 			>{\raggedright\arraybackslash\hsize=1.0\hsize}X
 			>{\raggedright\arraybackslash\hsize=1.5\hsize}X
 			@{}
@@ -370,8 +376,8 @@ La puesta en producción incorporó, además, objetos en los esquemas \code{PRON
 	\renewcommand{\arraystretch}{1.15}
 	\begin{tabularx}{\textwidth}{
 			@{}
-			>{\raggedright\arraybackslash\hsize=1.0\hsize}X
-			>{\raggedright\arraybackslash\hsize=0.5\hsize}X
+			>{\raggedright\arraybackslash\hsize=0.9\hsize}X
+			>{\raggedright\arraybackslash\hsize=0.6\hsize}X
 			>{\raggedright\arraybackslash\hsize=1.0\hsize}X
 			>{\raggedright\arraybackslash\hsize=1.5\hsize}X
 			@{}
