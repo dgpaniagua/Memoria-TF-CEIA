@@ -55,29 +55,29 @@ La solución se implementó sobre la arquitectura híbrida presentada en el cap�
 			\node[etiqueta] at (-0.25,\yf) {Capa 3\\(vistas)};
 			
 			% Demanda eléctrica
-			\node[fuente]  (d1) at (\xd,\ya) {SOTR (PI System)\\mediciones cada 10 minutos};
-			\node[proceso, local] (d2) at (\xd,\yb) {Activo de Dagster\\demanda por región};
-			\node[capauno] (d3) at (\xd,\yc) {Warehouse\\esquema DEMANDA};
-			\node[proceso] (d4) at (\xd,\yd) {Notebook\\limpieza y agregación horaria};
-			\node[capados] (d5) at (\xd,\ye) {Esquema DEMANDA\\series horarias y diarias por región};
+			\node[fuente]  (d1) at (\xd,\ya) {SOTR (PI System)\\Mediciones cada 10 minutos};
+			\node[proceso, local] (d2) at (\xd,\yb) {Activo de Dagster\\Demanda por región};
+			\node[capauno] (d3) at (\xd,\yc) {Warehouse\\Esquema DEMANDA};
+			\node[proceso] (d4) at (\xd,\yd) {Notebook\\Limpieza y agregación horaria};
+			\node[capados] (d5) at (\xd,\ye) {Esquema DEMANDA\\Series horarias y diarias por región};
 			\node[consumo] (d6) at (\xd,\yf) {Vistas de series diarias\\por región y MEM};
 			
 			% Meteorología observada
 			\node[fuente]  (m1) at (\xm,\ya) {SMN (archivos de texto)\\Open-Meteo (histórico)};
 			\node[proceso, local, text width=1.7cm] (m2a) at (\xm-1.2,\yb) {Descarga de archivos del SMN};
 			\node[proceso, text width=1.7cm] (m2b) at (\xm+1.2,\yb) {Notebook de capa 1};
-			\node[capauno] (m3) at (\xm,\yc) {Base KQL\\datos del SMN y Open-Meteo};
-			\node[proceso] (m4) at (\xm,\yd) {Pipeline\\temperatura aparente y agregación diaria};
-			\node[capados] (m5) at (\xm,\ye) {Esquema METEO\\series horarias y diarias por estación};
+			\node[capauno] (m3) at (\xm,\yc) {Base KQL\\Datos del SMN y Open-Meteo};
+			\node[proceso] (m4) at (\xm,\yd) {Pipeline\\Temperatura aparente y agregación diaria};
+			\node[capados] (m5) at (\xm,\ye) {Esquema METEO\\Series horarias y diarias por estación};
 			\node[consumo] (m6) at (\xm,\yf) {Vistas de series diarias\\por región};
 			
 			% Pronósticos meteorológicos
 			\node[fuente]  (p1) at (\xp,\ya) {Open-Meteo (ejecuciones)\\TWC y SMN};
 			\node[proceso, local, text width=1.7cm] (p2a) at (\xp-1.2,\yb) {Activo de Dagster (SMN)};
 			\node[proceso, text width=1.7cm] (p2b) at (\xp+1.2,\yb) {Notebooks de Open-Meteo y TWC};
-			\node[capauno] (p3) at (\xp,\yc) {Base KQL\\una tabla por fuente};
-			\node[proceso] (p4) at (\xp,\yd) {Pipeline\\validación del SMN y agregación diaria};
-			\node[capados] (p5) at (\xp,\ye) {Esquema PRONOS\\series horarias y diarias por estación};
+			\node[capauno] (p3) at (\xp,\yc) {Base KQL\\Una tabla por fuente};
+			\node[proceso] (p4) at (\xp,\yd) {Pipeline\\Validación del SMN y agregación diaria};
+			\node[capados] (p5) at (\xp,\ye) {Esquema PRONOS\\Series horarias y diarias por estación};
 			\node[consumo] (p6) at (\xp,\yf) {Vistas de series diarias\\por región};
 			
 			% Modelado
@@ -118,7 +118,9 @@ La solución se implementó sobre la arquitectura híbrida presentada en el cap�
 	\label{fig:diagrama_pipeline}
 \end{figure}
 
-La persistencia se organizó en tres capas. La capa~1 conserva una representación cercana a la fuente, sin transformaciones irreversibles. La capa~2 contiene datos validados, tipificados e integrados con las dimensiones del warehouse, como las estaciones meteorológicas y las regiones eléctricas. La capa~3 está formada por vistas orientadas al consumo analítico y al modelado, como los agregados de demanda de todo el país o los valores meteorológicos por región. Esta separación permite repetir las transformaciones cuando se modifican las reglas de procesamiento, sin volver a consultar las fuentes. El apéndice~\ref{AppendixA} describe las tablas y vistas de cada esquema.
+La persistencia se organizó en tres capas. La capa~1 conserva una representación cercana a la fuente, sin transformaciones irreversibles. La capa~2 contiene datos validados, tipificados e integrados con las dimensiones del warehouse, como las estaciones meteorológicas y las regiones eléctricas. 
+
+La capa~3 está formada por vistas orientadas al consumo analítico y al modelado, como los agregados de demanda de todo el país o los valores meteorológicos por región. Esta separación permite repetir las transformaciones cuando se modifican las reglas de procesamiento, sin volver a consultar las fuentes. El apéndice~\ref{AppendixA} describe las tablas y vistas de cada esquema.
 
 Sobre esta arquitectura se aplicaron criterios comunes a los tres flujos. 
 
@@ -230,9 +232,9 @@ Los pronósticos meteorológicos constituyen la información exógena disponible
 
 Se incorporaron tres fuentes. Open-Meteo provee, con resolución horaria y horizontes de entre 7 y 16 días, los modelos IFS \cite{ecmwfIFS}, ICON \cite{zangl2015icon}, GFS \cite{noaaGFS} y UKMO \cite{walters2019ukmo}. TWC informa valores diarios por partes de día y noche hasta 15 días, y el SMN, por franjas de mañana y tarde hasta 7 días. Las dos primeras se obtienen mediante notebooks de Fabric, y la tercera, mediante un activo de Dagster en el servidor local. La tabla~\ref{tab:fuentes_pronosticos}, en el apéndice~\ref{AppendixC}, detalla las variables de cada fuente.
 
-Para Open-Meteo se utilizó la API de ejecuciones individuales (\textit{Single Runs}) \cite{openMeteoSingleRuns}, que devuelve el horizonte completo de una inicialización específica de cada modelo. Se adoptó la ejecución de las 00 UTC (\textit{Coordinated Universal Time}), que se publica durante la madrugada en Argentina y queda disponible antes del cálculo diario. La API de pronósticos históricos (\textit{Historical Forecast}) de Open-Meteo \cite{openMeteoHistoricalForecast} no resulta adecuada para este fin porque entrega una combinación de distintas ejecuciones, lo que no permite contar con la misma información que se utilizará en producción. 
+Para Open-Meteo se utilizó la API de ejecuciones individuales (Single Runs) \cite{openMeteoSingleRuns}, que devuelve el horizonte completo de una inicialización específica de cada modelo. Se adoptó la ejecución de las 00 UTC (\textit{Coordinated Universal Time}), que se publica durante la madrugada en Argentina y queda disponible antes del cálculo diario. La API de pronósticos históricos (Historical Forecast) de Open-Meteo \cite{openMeteoHistoricalForecast} no resulta adecuada para este fin porque entrega una combinación de distintas ejecuciones, lo que no permite contar con la misma información que se utilizará en producción. 
 
-Los modelos, sus horizontes y sus períodos de vigencia se definieron en una tabla del warehouse llamada \code{PRONOS.PRONOS\_TOTALES}. El horizonte registrado para cada modelo corresponde a la última anticipación que este cubre en forma completa: 14 días para IFS, 15 para GFS y 6 para ICON y UKMO. Las consultas se realizan por las coordenadas de las estaciones vigentes en cada fecha de cálculo. 
+Los modelos, sus horizontes y sus períodos de vigencia se definieron en la tabla \code{PRONOS.PRONOS\_TOTALES} del warehouse. El horizonte registrado para cada modelo corresponde a la última anticipación que este cubre en forma completa: 14 días para IFS, 15 para GFS y seis para ICON y UKMO. Las consultas se realizan por las coordenadas de las estaciones vigentes en cada fecha de cálculo. 
 
 El notebook de Open-Meteo recibe un rango de fechas, procesa cada ejecución de manera independiente y convierte las estampas de tiempo a hora local, con el mismo criterio aplicado a los datos observados. The Weather Channel (TWC) y el SMN solo publican el pronóstico vigente, por lo que su historia se construye a partir de la ejecución diaria. Los resultados de todas las fuentes se almacenan en la base KQL, en una tabla de capa~1 por fuente.
 
@@ -336,7 +338,7 @@ Dentro de cada escenario, los modelos se comparan sobre el mismo conjunto de reg
 \label{subsec:seleccion_baseline}
 %----------------------------------------------------------------------------------------
 
-El modelo de referencia establece el nivel de desempeño que deben superar los modelos más complejos y constituye, además, una alternativa productiva de bajo costo computacional. Se evaluaron los algoritmos presentados en la subsección~\ref{subsec:modelos_ml}: regresión lineal (RLIN), Random Forest (RF), XGBoost (XGB) y LightGBM (LGBM). Como referencia mínima se incorporó un modelo ingenuo estacional semanal (SNAIVE), que repite los valores de la última semana observada.
+El modelo de referencia establece el nivel de desempeño que deben superar los modelos más complejos y constituye, además, una alternativa productiva de bajo costo computacional. Se evaluaron cuatro algoritmos de la subsección~\ref{subsec:modelos_ml}: regresión lineal (RLIN), Random Forest (RF), XGBoost (XGB) y LightGBM (LGBM). Como referencia mínima se incorporó un modelo ingenuo estacional semanal (SNAIVE), que repite los valores de la última semana observada.
 
 Se entrenó un modelo local por algoritmo, variable objetivo y región, con estrategia recursiva, los rezagos de 1, 2, 7 y 14 días de la variable objetivo y las covariables del día pronosticado. Se evaluó también una variante que incorpora las covariables de 1, 2 y 7 días antes del día pronosticado. Se utilizaron los hiperparámetros por defecto de cada biblioteca, ya que el propósito de esta etapa fue establecer una referencia y no optimizar cada algoritmo.
 
@@ -377,7 +379,7 @@ La selección se realizó en dos fases. En la primera se eligió el grupo de cov
 \label{subsec:modelos_profundos}
 %----------------------------------------------------------------------------------------
 
-La segunda etapa evaluó si arquitecturas más recientes mejoran el pronóstico respecto del modelo de referencia. Se implementaron las redes recurrentes LSTM y GRU, las arquitecturas de múltiples pasos TFT, TiDE y TSMixer, y el modelo fundacional Chronos-2, presentados en las secciones~\ref{sec:modelos_pronostico} y \ref{sec:modelos_preentrenados}, con la configuración de la tabla~\ref{tab:modelos_profundos}.
+La segunda etapa evaluó si arquitecturas más recientes mejoran el pronóstico respecto del modelo de referencia. Se implementaron las redes recurrentes LSTM y GRU, las arquitecturas de múltiples pasos TFT, TiDE y TSMixer, y el modelo fundacional Chronos-2, presentados en la sección~\ref{sec:modelos_pronostico} y en la subsección~\ref{sec:modelos_preentrenados}, con la configuración de la tabla~\ref{tab:modelos_profundos}.
 
 \begin{table}[htbp]
 	\centering
@@ -396,23 +398,23 @@ La segunda etapa evaluó si arquitecturas más recientes mejoran el pronóstico 
 		\toprule
 		\textbf{Modelo} & \textbf{Estrategia} & \textbf{Hiperparámetros principales} \\
 		\midrule
-		LSTM & Recursiva, día a día. & 2 capas de 64 unidades; \textit{dropout} 0,1. \\
-		GRU & Recursiva, día a día. & 2 capas de 64 unidades; \textit{dropout} 0,1. \\
-		TFT & Directa, 15 días. & Dimensión oculta 32; 4 cabezales de atención; \textit{dropout} 0,1. \\
-		TiDE & Directa, 15 días. & Dimensión oculta 128; \textit{dropout} 0,1. \\
-		TSMixer & Directa, 15 días. & 2 bloques; dimensión oculta 64; \textit{dropout} 0,1. \\
+		LSTM & Recursiva, día a día. & 2 capas de 64 unidades; dropout 0,1. \\
+		GRU & Recursiva, día a día. & 2 capas de 64 unidades; dropout 0,1. \\
+		TFT & Directa, 15 días. & Dimensión oculta 32; 4 cabezales de atención; dropout 0,1. \\
+		TiDE & Directa, 15 días. & Dimensión oculta 128; dropout 0,1. \\
+		TSMixer & Directa, 15 días. & 2 bloques; dimensión oculta 64; dropout 0,1. \\
 		Chronos-2 & Directa, 15 días. & Contexto de 512 días; sin ajuste y con ajuste mediante LoRA. \\
 		\bottomrule
 	\end{tabularx}
 \end{table}
 
-A diferencia del modelo de referencia, los modelos neuronales se entrenaron de forma global para cada variable objetivo: un mismo modelo aprende de las diez regiones, que se identifican mediante una covariable estática con codificación \textit{one-hot}. El entrenamiento global multiplica la cantidad de ejemplos disponibles, lo que resulta relevante para redes con muchos más parámetros que los modelos basados en árboles. La variable objetivo y las covariables se estandarizaron por región con la media y el desvío del período de entrenamiento.
+A diferencia del modelo de referencia, los modelos neuronales se entrenaron de forma global para cada variable objetivo: un mismo modelo aprende de las diez regiones, que se identifican mediante una covariable estática con codificación one-hot. El entrenamiento global multiplica la cantidad de ejemplos disponibles, lo que resulta relevante para redes con muchos más parámetros que los modelos basados en árboles. La variable objetivo y las covariables se estandarizaron por región con la media y el desvío del período de entrenamiento.
 
 Se utilizó el grupo G5, que obtuvo el mejor desempeño en la primera fase de la selección del modelo de referencia. Los modelos reciben una ventana de 56 días, con sus covariables y las de los días pronosticados. TFT, TiDE y TSMixer generan los 15 días en un único paso, mientras que LSTM y GRU recorren la historia hasta $D-1$ y avanzan un día por vez con las covariables del día pronosticado y su propia predicción del día anterior.
 
-El entrenamiento utilizó la función de pérdida L1, el optimizador Adam con una tasa de aprendizaje de $10^{-3}$, lotes de 64 ejemplos y semillas fijas. En cada reentrenamiento mensual se aplicó el procedimiento en dos pasos de la figura~\ref{fig:esquema_validacion}. En el primero, el modelo se entrenó con los datos disponibles hasta 90 días antes de la fecha de reentrenamiento, con detención temprana (\textit{early stopping}) sobre esos 90 días, una paciencia de 5 épocas y un máximo de 50, para determinar la cantidad de épocas. En el segundo, se entrenó un modelo nuevo con todos los datos hasta $R-1$ durante esa cantidad de épocas. De este modo, la validación regula la extensión del entrenamiento sin excluir del modelo final los datos más recientes.
+El entrenamiento utilizó la función de pérdida L1, el optimizador Adam con una tasa de aprendizaje de $10^{-3}$, lotes de 64 ejemplos y semillas fijas. En cada reentrenamiento mensual se aplicó el procedimiento en dos pasos de la figura~\ref{fig:esquema_validacion}. En el primero, el modelo se entrenó con los datos disponibles hasta 90 días antes de la fecha de reentrenamiento, con detención temprana (early stopping) sobre esos 90 días, una paciencia de cinco épocas y un máximo de 50, para determinar la cantidad de épocas. En el segundo, se entrenó un modelo nuevo con todos los datos hasta $R-1$ durante esa cantidad de épocas. De este modo, la validación regula la extensión del entrenamiento sin excluir del modelo final los datos más recientes.
 
-Chronos-2 se utilizó sin ajuste (\textit{zero-shot}) a través de Darts y con ajuste mediante LoRA en cada reentrenamiento, a través de la biblioteca oficial del modelo, ya que Darts no admite su ajuste. El ajuste partió en cada caso del modelo preentrenado, con 500 pasos de optimización y una tasa de aprendizaje de $10^{-5}$.
+Chronos-2 se utilizó sin ajuste (zero-shot) a través de Darts y con ajuste mediante LoRA en cada reentrenamiento, a través de la biblioteca oficial del modelo, ya que Darts no admite su ajuste. El ajuste partió en cada caso del modelo preentrenado, con 500 pasos de optimización y una tasa de aprendizaje de $10^{-5}$.
 
 Para que la comparación con el modelo de referencia dependiera únicamente del modelo, LightGBM se volvió a evaluar con el grupo G5 y reentrenamiento mensual. Se incorporó, además, una variante con hiperparámetros ajustados (LGBM\_OPT). La búsqueda se realizó con Optuna, con 50 pruebas por variable objetivo sobre el espacio de la tabla~\ref{tab:espacio_optuna}, en el apéndice~\ref{AppendixD}. Cada prueba se evaluó con el MAPE promedio de las 15 anticipaciones en una validación con origen móvil, con meteorología observada y reentrenamiento trimestral, entre el 01/09/2024 y el 31/08/2025. De este modo, la búsqueda no utilizó el período de prueba.
 
@@ -462,11 +464,11 @@ En cuanto al nivel de agregación, la energía del MEM puede obtenerse como suma
 \label{subsec:respuesta_temperatura}
 %----------------------------------------------------------------------------------------
 
-El análisis de los errores de la etapa anterior mostró que los modelos subestiman la demanda en los días de mayor consumo. Para representar mejor la respuesta de la demanda a la temperatura, se definieron los grupos G6 y G6A, que modifican G5 y G5A en tres aspectos: reemplazan los cuadrados de las temperaturas por los grados-día presentados en la subsección~\ref{subsec:grados_dia}, incorporan su persistencia y agregan los feriados vecinos.
+El análisis de los errores de la etapa anterior mostró que los modelos subestiman la demanda en los días de mayor consumo. Con el objetivo de mejorar la respuesta de la demanda a la temperatura, se definieron los grupos G6 y G6A, que modifican G5 y G5A en tres aspectos: reemplazan los cuadrados de las temperaturas por los grados-día presentados en la subsección~\ref{subsec:grados_dia}, incorporan su persistencia y agregan los feriados vecinos.
 
 Los grados-día de cada región se calculan con su temperatura media, aparente en G6 y del aire en G6A, y se acompañan de sus cuadrados, que permiten representar una respuesta que se acelera en los extremos. Los umbrales se estimaron por región con los dos años anteriores al período de prueba. Para cada región se ajustó, por mínimos cuadrados, un modelo de la energía diaria en función de la tendencia, el feriado, el día de la semana y los dos tramos de temperatura, y se eligieron los umbrales de menor error en una grilla de 0,5~\textdegree C. La tabla~\ref{tab:umbrales_grados_dia}, en el apéndice~\ref{AppendixD}, presenta los valores obtenidos. Las diferencias entre regiones son marcadas, y GBA presenta la zona de confort más alta.
 
-La persistencia se representa con la suma de los CDD y de los HDD de los tres días anteriores. Los grados-día se calculan después de combinar la meteorología observada hasta $D-1$ con la pronosticada desde $D$, por lo que la persistencia de los días pronosticados incorpora también valores pronosticados. 
+Cuando se produce un cambio marcado de temperatura, puede observarse que la respuesta de la demanda eléctricano es inmediata y depende de la historia reciente: no es lo mismo un día de 20~\textdegree C de temperatura media después de 5 días de 35~\textdegree C, que después de 5 días de 20~\textdegree C. En este sentido, se representa esa persistencia con la suma de los CDD y de los HDD de los tres días anteriores. Para las anticipaciones más altas, este cálculo incluye valores pronosticados, ya que aún no se cuenta con los valores observados.
 
 Los feriados vecinos son indicadores de feriado del día anterior y del día siguiente, que la regresión de producción ya utilizaba. Sin ellos, LightGBM, que solo recibe las covariables del día pronosticado, y LSTM, que no conoce las del día siguiente, no pueden representar el efecto de los días puente.
 
@@ -601,7 +603,9 @@ Las predicciones de cada modelo se combinan mediante ENS\_PROM, el promedio simp
 	\end{tabularx}
 \end{table}
 
-El pronóstico publicado es el promedio de ENS\_PROM con los grupos obligatorios y opcionales disponibles en cada anticipación. Si falta un grupo obligatorio, no se publica. Si falta uno opcional, el promedio se calcula con los restantes. Los grupos de monitoreo se calculan y se almacenan, pero no intervienen en el promedio, lo que permite medir en producción el aporte de una fuente antes de incorporarla. Así, \code{GFS\_HIB}, que solo dispone de historia desde abril de 2026, y \code{TWC\_IFS\_HIB\_SIN\_SMN}, que mide el aporte del SMN, se mantienen en monitoreo.
+El pronóstico publicado es el promedio de ENS\_PROM con los grupos obligatorios y opcionales disponibles en cada anticipación. Si falta un grupo obligatorio, no se publica. Si falta uno opcional, el promedio se calcula con los restantes. 
+
+Los grupos de monitoreo se calculan y se almacenan, pero no intervienen en el promedio, lo que permite medir en producción el aporte de una fuente antes de incorporarla. Así, \code{GFS\_HIB}, que solo dispone de historia desde abril de 2026, y \code{TWC\_IFS\_HIB\_SIN\_SMN}, que mide el aporte del SMN, se mantienen en monitoreo.
 
 A diferencia del desarrollo, el pronóstico híbrido se construye en la entrada de los modelos: cada grupo arma una única entrada meteorológica, con las temperaturas corregidas hasta la anticipación~6 y las originales desde la~7. La temperatura mínima del día~0 se toma del SMN, la fuente con menor error en esa variable y anticipación. Ambos cambios se evaluaron con los modelos del desarrollo y no modificaron el error del pronóstico publicado, como se presenta en el capítulo~\ref{Chapter4}.
 
@@ -631,10 +635,10 @@ La figura~\ref{fig:arquitectura_produccion} presenta los componentes del sistema
 			semanal/.style={-stealth, thick, dashed, blue!60!black}
 			]
 			% Pipeline diario
-			\node[pipe] (pp) at (0,2.4) {\code{PPLN\_PRONOS}\\pronósticos del día};
-			\node[pipe] (pm) at (0,0.8) {\code{PPLN\_METEO}\\observaciones de $D-1$};
-			\node[pipe] (mod) at (4.4,1.6) {\code{PPLN\_MODELOS}\\pronóstico, alertas y escritura};
-			\node[pipe] (ree) at (9.4,1.6) {\code{PPLN\_REENTRENO}\\umbrales y reentrenamiento};
+			\node[pipe] (pp) at (0,2.4) {\code{PPLN\_PRONOS}\\Pronósticos del día};
+			\node[pipe] (pm) at (0,0.8) {\code{PPLN\_METEO}\\Observaciones de $D-1$};
+			\node[pipe] (mod) at (4.4,1.6) {\code{PPLN\_MODELOS}\\Pronóstico, alertas y escritura};
+			\node[pipe] (ree) at (9.4,1.6) {\code{PPLN\_REENTRENO}\\Umbrales y reentrenamiento};
 			\node[pipe] (ps) at (9.4,-0.4) {\code{NB\_PSEM\_L1}\\Programación Semanal};
 			\draw[dashed, gray!70!black] (-2.0,3.3) rectangle (11.4,-1.3);
 			\node[font=\footnotesize\bfseries, anchor=south west] at (-1.9,-1.25) {\code{PPLN\_DIARIO} (08:30)};

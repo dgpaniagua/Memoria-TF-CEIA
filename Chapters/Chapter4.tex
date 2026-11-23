@@ -84,7 +84,7 @@ Dentro de cada escenario, los modelos se comparan sobre el mismo conjunto de fec
 \label{sec:evaluacion_modelo}
 %----------------------------------------------------------------------------------------
 
-Los resultados se presentan en el orden de las etapas descritas en la sección~\ref{sec:desarrollo_modelos}. Cada etapa se compara con la anterior, de modo que se identifique el aporte de cada decisión al desempeño final.
+Los resultados se presentan en el orden de las etapas descritas en la sección~\ref{sec:desarrollo_modelos}. Cada etapa se compara con la anterior, de modo que se identifique el aporte de cada decisión al desempeño final. Además, se filtran sucesivamente los modelos cuyas métricas no justifiquen el paso a la etapa siguiente por bajo rendimiento.
 
 %----------------------------------------------------------------------------------------
 \subsection{Modelo de referencia}
@@ -124,7 +124,7 @@ La figura~\ref{fig:referencia_mape} muestra el MAPE en función de la anticipaci
 	\label{fig:referencia_mape}
 \end{figure}
 
-La figura~\ref{fig:referencia_sesgo} presenta la distribución del error porcentual de LightGBM con el pronóstico de IFS. La mediana se mantiene cerca de cero en todo el horizonte, con una leve tendencia a la subestimación, mientras que la dispersión aumenta con la anticipación. El intervalo entre los percentiles 5 y 95 pasa de $-4{,}9$\,\% a 3,9\,\% en el día~0 a $-17{,}2$\,\% a 16,1\,\% en el día~14.
+La figura~\ref{fig:referencia_sesgo} presenta la distribución del error porcentual de LightGBM con el pronóstico de IFS. La mediana se mantiene cerca de cero en todo el horizonte, con una leve tendencia a la subestimación, mientras que la dispersión aumenta con la anticipación. El intervalo entre los percentiles 5 y 95 pasa de $-4{,}9$\,\% a 3,9\,\% en el día~0 a $-17{,}2$\,\% a 16,1\,\% en el día~14, resultado atribuible al incremento de los errores en los pronósticos meteorológicos en los días de mayor anticipación.
 
 \begin{figure}[H]
 	\centering
@@ -155,15 +155,15 @@ La tabla~\ref{tab:resultados_profundos} presenta las métricas de la energía de
 		\cmidrule(lr){2-3} \cmidrule(lr){4-6}
 		\textbf{Modelo} & \textbf{MAPE} & \textbf{RMSE} & \textbf{MAPE} & \textbf{RMSE} & \textbf{Sesgo} & \textbf{Tiempo} \\
 		\midrule
-		TSMixer & 1,63 & 8,6 & 3,93 & 23,0 & 0,16 & 98 \\
-		TFT & 1,79 & 9,6 & 4,10 & 23,6 & 0,00 & 634 \\
-		GRU & 1,85 & 10,1 & 3,99 & 23,4 & 0,16 & 24 \\
-		LSTM & 1,90 & 10,1 & 3,97 & 23,2 & $-0{,}04$ & 24 \\
-		LGBM\_OPT & 2,29 & 11,8 & 4,14 & 24,0 & $-0{,}85$ & -- \\
-		TiDE & 2,32 & 12,0 & 4,20 & 24,0 & $-0{,}21$ & 80 \\
-		LightGBM & 2,39 & 12,7 & 4,22 & 24,3 & $-0{,}88$ & -- \\
-		Chronos-2 ajustado & 2,99 & 15,3 & 4,70 & 25,8 & 0,17 & 338 \\
-		Chronos-2 sin ajuste & 3,55 & 18,9 & 4,98 & 27,3 & $-0{,}53$ & -- \\
+		TSMixer & 1,63 & 8,6 & 3,93 & 23,0 & 0,16 & 98 \\ \addlinespace[2pt]
+		TFT & 1,79 & 9,6 & 4,10 & 23,6 & 0,00 & 634 \\ \addlinespace[2pt]
+		GRU & 1,85 & 10,1 & 3,99 & 23,4 & 0,16 & 24 \\ \addlinespace[2pt]
+		LSTM & 1,90 & 10,1 & 3,97 & 23,2 & $-0{,}04$ & 24 \\ \addlinespace[2pt]
+		LGBM\_OPT & 2,29 & 11,8 & 4,14 & 24,0 & $-0{,}85$ & -- \\ \addlinespace[2pt]
+		TiDE & 2,32 & 12,0 & 4,20 & 24,0 & $-0{,}21$ & 80 \\ \addlinespace[2pt]
+		LightGBM & 2,39 & 12,7 & 4,22 & 24,3 & $-0{,}88$ & -- \\ \addlinespace[2pt]
+		Chronos-2 ajustado & 2,99 & 15,3 & 4,70 & 25,8 & 0,17 & 338 \\ \addlinespace[2pt]
+		Chronos-2 sin ajuste & 3,55 & 18,9 & 4,98 & 27,3 & $-0{,}53$ & -- \\ \addlinespace[2pt]
 		SNAIVE & 9,14 & 48,2 & 8,99 & 47,5 & 0,71 & -- \\
 		\bottomrule
 	\end{tabular*}
@@ -171,7 +171,7 @@ La tabla~\ref{tab:resultados_profundos} presenta las métricas de la energía de
 
 Con la meteorología observada, todas las redes neuronales superaron al modelo de referencia, aunque TiDE quedó muy cerca. TSMixer obtuvo el menor error, con un MAPE de 1,63\,\%, un 29\,\% inferior al de LGBM\_OPT. Con el pronóstico de IFS, las diferencias se reducen: los modelos entrenados, salvo Chronos-2, se ubican entre 3,93\,\% y 4,22\,\%, porque el error del pronóstico meteorológico, común a todos, pasa a dominar. El ajuste de hiperparámetros de LightGBM produjo una mejora pequeña, de 2,39\,\% a 2,29\,\% con la meteorología observada y de 4,22\,\% a 4,14\,\% con IFS.
 
-La figura~\ref{fig:profundos_mape} muestra el comportamiento por anticipación de los modelos más representativos de cada familia. Con la meteorología observada, el error de TSMixer, que genera el horizonte completo en un único paso, se mantiene casi constante, entre 1,45\,\% y 1,71\,\%. Las redes recurrentes, en cambio, obtienen el menor error en el día~0, con 1,19\,\% en LSTM, pero su error crece con la anticipación hasta 2,27\,\% en el día~14, como consecuencia de la acumulación de errores de la estrategia recursiva. Con IFS, las curvas de todos los modelos entrenados prácticamente se superponen a partir del día~7.
+La figura~\ref{fig:profundos_mape} muestra el comportamiento por anticipación de los modelos más representativos de cada familia: LightGBM optimizado, LSTM, TSMixer y Chronos-2 con pesos ajustados. Con la meteorología observada, el error de TSMixer, que genera el horizonte completo en un único paso, se mantiene casi constante, entre 1,45\,\% y 1,71\,\%. Las redes recurrentes, en cambio, obtienen el menor error en el día~0, con 1,19\,\% en LSTM, pero su error crece con la anticipación hasta 2,27\,\% en el día~14, como consecuencia de la acumulación de errores de la estrategia recursiva. Con IFS, las curvas de todos los modelos entrenados prácticamente se superponen a partir del día~7.
 
 \begin{figure}[H]
 	\centering
@@ -231,7 +231,7 @@ Como conclusión, se determina que la energía del MEM se obtiene como suma de l
 
 Los ensambles mejoraron a los modelos individuales con la meteorología observada. ENS\_STACK obtuvo un MAPE de 1,42\,\%, inferior al 1,57\,\% de TSMixer, el mejor modelo individual. Con IFS, ENS\_PROM y ENS\_STACK quedaron cerca del mejor modelo individual, con 4,29\,\% y 4,39\,\%, ya que el error meteorológico afecta a todos los modelos de la misma forma y reduce el beneficio de combinarlos.
 
-La temperatura del aire (G5A) produjo errores mayores que la temperatura aparente (G5) en casi todos los modelos. El MAPE de ENS\_STACK aumentó de 1,42\,\% a 1,63\,\% con la meteorología observada y de 4,39\,\% a 4,70\,\% con IFS. La temperatura aparente incorpora el efecto de la humedad y del viento sobre la sensación térmica, que influye en el uso de equipos de climatización. Por este motivo, se mantuvo como opción principal.
+La temperatura del aire (G5A) produjo errores mayores que la temperatura aparente (G5) en casi todos los modelos. El MAPE de ENS\_STACK aumentó de 1,42\,\% a 1,63\,\% con la meteorología observada y de 4,39\,\% a 4,70\,\% con IFS. La temperatura aparente incorpora el efecto de la humedad y del viento sobre la sensación térmica, que influye en el uso de equipos de climatización. De esta forma, el modelo no debe inferir estas relaciones complejas, ya que se aportan explícitamente utilizando una fórmula conocida. Por este motivo, el grupo con temperatura aparente se mantuvo como opción principal.
 
 \subsubsection{Grupos de pronósticos}
 
@@ -252,7 +252,7 @@ La incorporación del EMAE produjo resultados dispares. Con la meteorología obs
 
 \subsubsection{Potencias del MEM y comparación con el modelo de producción}
 
-La tabla~\ref{tab:resultados_mem_g5} presenta las métricas de la configuración MEM G5 para las tres variables objetivo.
+La tabla~\ref{tab:resultados_mem_g5} presenta las métricas de la configuración MEM G5 para las tres variables objetivo. Es importante recordar que estos modelos pronostican la serie MEM, que es el total de la demanda del país, de forma directa y no por regiones, ya que las potencias no se pueden obtener como su sumatoria.
 
 \begin{table}[H]
 	\centering
@@ -280,7 +280,7 @@ La tabla~\ref{tab:resultados_mem_g5} presenta las métricas de la configuración
 	\end{tabular*}
 \end{table}
 
-ENS\_STACK obtuvo el menor error en las tres variables. La potencia pico resultó la variable más difícil de pronosticar, con un MAPE de 5,26\,\% con IFS, ya que corresponde a un valor horario extremo, mientras que la energía integra el comportamiento de todo el día. Respecto de RLIN\_LEGACY (la réplica de la regresión lineal utilizada en producción antes del trabajo), el MAPE con IFS se redujo un 30\,\% en la potencia pico y un 34\,\% en la potencia mínima. En la energía, la reducción alcanza el 41\,\% si se considera la suma de los pronósticos regionales de la configuración Regional G5, con un MAPE de 4,39\,\% frente a 7,41\,\%.
+ENS\_STACK obtuvo el menor error en las tres variables con la meteorología observada, mientras que con IFS solo fue superado en la potencia mínima. La potencia pico resultó la variable más difícil de pronosticar, con un MAPE de 5,26\,\% con IFS, ya que corresponde a un valor horario extremo, mientras que la energía integra el comportamiento de todo el día. Respecto de RLIN\_LEGACY, el MAPE con IFS se redujo un 30\,\% en la potencia pico y un 34\,\% en la potencia mínima. En la energía, la reducción fue del 41\,\% si se considera la suma de los pronósticos regionales de la configuración G5, con un MAPE de 4,39\,\% frente a 7,41\,\%.
 
 %----------------------------------------------------------------------------------------
 \subsection{Representación de la respuesta a la temperatura}
@@ -359,7 +359,7 @@ La corrección del sesgo reciente produjo la mayor mejora en la potencia pico, c
 
 Con la cadena completa, ENS\_PROM superó levemente a ENS\_STACK, que obtuvo un MAPE de 3,84\,\%, 4,54\,\% y 3,75\,\% en las tres variables. Este resultado difiere del obtenido con la meteorología observada, en el que ENS\_STACK era el mejor ensamble (tabla~\ref{tab:resultados_g5}). Dado que ENS\_PROM no requiere ajustar pesos ni acumular historia para cada grupo de pronósticos, se adoptó como ensamble de producción.
 
-La configuración productiva introdujo dos cambios respecto de la evaluada: el híbrido se construye en la entrada de los modelos, y no como combinación de sus predicciones, y la temperatura mínima del día~0 del grupo TWC + IFS se toma del SMN. Con los modelos de esta etapa, la cadena productiva obtuvo un MAPE de 3,78\,\%, 4,51\,\% y 3,72\,\%, equivalente al de la tabla~\ref{tab:resultados_postproceso}. Los resultados del resto del capítulo corresponden a esa cadena, denominada pronóstico publicado.
+La configuración productiva introdujo dos cambios respecto de la evaluada: el híbrido se construye en la entrada de los modelos, y no como combinación de sus predicciones, y la temperatura mínima del día~0 del grupo TWC + IFS se toma del SMN. Con los modelos de esta etapa, la cadena productiva obtuvo el mismo MAPE que la configuración evaluada en la tabla~\ref{tab:resultados_postproceso}, con diferencias de una centésima de punto o menos en las tres variables. Los resultados del resto del capítulo corresponden a esa cadena, denominada pronóstico publicado.
 
 La tabla~\ref{tab:resultados_final} compara el pronóstico publicado con los modelos de referencia de las etapas anteriores, sobre el mismo conjunto de fechas de cálculo y anticipaciones. Respecto de RLIN\_LEGACY, el MAPE se redujo un 49\,\% en la energía, un 40\,\% en la potencia pico y un 42\,\% en la potencia mínima. Respecto de LGBM\_OPT con G5 e IFS, la reducción fue de entre el 18\,\% y el 19\,\% en las tres variables.
 

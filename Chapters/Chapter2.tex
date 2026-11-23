@@ -113,14 +113,14 @@ Las arquitecturas de múltiples pasos pronostican el horizonte completo con cova
 \subsection{Modelos fundacionales}
 \label{sec:modelos_preentrenados}
 
-Los modelos fundacionales se preentrenan sobre colecciones amplias de series para aprender patrones generales de tendencia, estacionalidad y dependencia temporal, y pueden aplicarse a series nuevas sin entrenamiento (\textit{zero-shot}) o adaptarse mediante un ajuste. Se utilizó Chronos-2 \cite{ansari2025chronos2}, sucesor de Chronos \cite{ansari2024chronos}. Es un modelo de 120 millones de parámetros, preentrenado con series reales y sintéticas, cuya atención grupal procesa en forma conjunta la serie objetivo y sus covariables pasadas y futuras. Sus pesos no fueron generados como parte del trabajo.
+Los modelos fundacionales se preentrenan sobre colecciones amplias de series para aprender patrones generales de tendencia, estacionalidad y dependencia temporal, y pueden aplicarse a series nuevas sin entrenamiento (zero-shot) o adaptarse mediante un ajuste. Se utilizó Chronos-2 \cite{ansari2025chronos2}, sucesor de Chronos \cite{ansari2024chronos}. Es un modelo de 120 millones de parámetros, preentrenado con series reales y sintéticas, cuya atención grupal procesa en forma conjunta la serie objetivo y sus covariables pasadas y futuras. Sus pesos no fueron generados como parte del trabajo.
 
 Para el ajuste se utilizó LoRA (\textit{Low-Rank Adaptation}) \cite{hu2022lora}, que mantiene fijos los pesos preentrenados y entrena solo matrices de bajo rango agregadas a algunas capas, lo que reduce los parámetros ajustados y conserva el conocimiento del preentrenamiento. Estos modelos permiten obtener una referencia sin entrenar una red desde cero. Sin embargo, sus datos de preentrenamiento pueden no representar las particularidades del consumo argentino, por lo que se evaluaron como una familia adicional y no como sustitutos de los modelos supervisados.
 
 \subsection{Ensambles}
 \label{subsec:modelos_ensambles}
 
-Un ensamble combina las predicciones de varios modelos para compensar sus errores. El promedio reduce la varianza cuando los errores no están perfectamente correlacionados, mientras que el \textit{stacking} \cite{wolpert1992stacking} entrena un metamodelo que pondera las predicciones de los modelos base, con predicciones obtenidas sobre datos no utilizados en su entrenamiento. El mismo principio se aplica a la combinación de pronósticos obtenidos con distintas fuentes de información \cite{bates1969combination}, como un mismo modelo de demanda alimentado con distintos pronósticos meteorológicos.
+Un ensamble combina las predicciones de varios modelos para compensar sus errores. El promedio reduce la varianza cuando los errores no están perfectamente correlacionados, mientras que el stacking \cite{wolpert1992stacking} entrena un metamodelo que pondera las predicciones de los modelos base, con predicciones obtenidas sobre datos no utilizados en su entrenamiento. El mismo principio se aplica a la combinación de pronósticos obtenidos con distintas fuentes de información \cite{bates1969combination}, como un mismo modelo de demanda alimentado con distintos pronósticos meteorológicos.
 
 \subsection{Representación de la temperatura y corrección de pronósticos}
 \label{subsec:grados_dia}
